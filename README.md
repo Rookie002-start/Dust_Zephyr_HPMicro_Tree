@@ -1,6 +1,6 @@
-# sdk_glue_user — HPM 侧用户自研层（与 sdk_glue 同级的小树）
+# Dust_Zephyr_HPMicro_Tree（本地目录 `sdk_glue_user`）— HPM 用户自研层
 
-> **SELF-MAINTAINED — qingyu**
+> **SELF-MAINTAINED — Rookie002-start**
 > 这是与 sdk_glue / sdk_env 同级的用户自研层（`<workspace>/sdk_glue_user`，workspace 如 `E:\Zephyr_HPMicro`），
 > 结构镜像 sdk_glue（`boards/`、`soc/`、`dts/`…），只包含用户自研/移植的**独立新增文件**，**独立 git 仓库管理**。
 >
@@ -12,8 +12,11 @@
 ```
 sdk_glue_user/
 ├── boards/         用户自研板卡（boards/<vendor>/<name>/）
+├── boards/openocd/ CMSIS-DAP 等调试器配置
+├── include/        生成的时钟等 DT binding 头文件
 ├── soc/            用户自研 SoC 支持（soc/<vendor>/<family>/）
-├── dts/bindings/   用户自研 devicetree binding
+├── dts/            用户自研 devicetree 与 binding
+├── zephyr-patches/ 社区上游补丁与历史归档
 └── README.md
 ```
 
@@ -39,6 +42,17 @@ list(APPEND DTS_ROOT   "<workspace>/sdk_glue_user/dts")
 ```
 
 之后 `west build -b hpm5361icb` 可直接按板名找到。
+
+默认开发目录：
+
+```text
+~/Zephyr_HPMicro/
+├── sdk_env/
+├── sdk_glue/
+└── sdk_glue_user/
+```
+
+`sdk_env` 与 `sdk_glue` 使用社区远程，本地修改由本仓库的补丁统一管理。
 
 ## 管理方式
 
@@ -81,11 +95,11 @@ Windows：
 Zephyr 补丁不在这里重复维护，请运行：
 
 ```bash
-../Dust_Zephyr_Tree/patches/apply-zephyr-patches.sh \
-  --zephyr <zephyr>
+<path-to-Dust_Zephyr_Tree>/patches/apply-zephyr-patches.sh \
+  --zephyr ~/zephyrproject/zephyr
 ```
 
 ## 备注
 
 - 底层 bug 修复（如 hpm_sdk `hpm_misc.h` 的 DLM/ILM 地址转换、drivers 修改、dtsi 修改）**必须改官方文件**，以 patch 形式管理（见 `zephyr-patches/`）。
-- 本层只放"新增独立文件"，避免别人 clone 官方后找不到用户加的东西。
+- 本层保存板卡、SoC、DTS 和驱动适配；社区文件修改保存在 `zephyr-patches/`。
