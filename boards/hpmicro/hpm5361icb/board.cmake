@@ -15,8 +15,19 @@ if(NOT CONFIG_XIP)
 	board_runner_args(openocd "--use-elf")
 endif()
 
+# 调试探针选择：cmake -DOPENOCD_INTERFACE=<probe>
+# 取值对应 sdk_env/hpm_sdk/boards/openocd/probes/<probe>.cfg
+# （cmsis_dap / jlink / ft2232 / ft232 / nds_aice_micro ...），默认 cmsis_dap。
+# 为兼容 ST 板卡的写法，'dap-cmsis' 等价于 'cmsis_dap'。
+if(NOT OPENOCD_INTERFACE)
+	set(OPENOCD_INTERFACE "cmsis_dap")
+endif()
+if(OPENOCD_INTERFACE STREQUAL "dap-cmsis")
+	set(OPENOCD_INTERFACE "cmsis_dap")
+endif()
+
 if(${BOARD} STREQUAL "hpm5361icb")
-	board_runner_args(openocd "--config=${OPENOCD_CONFIG_DIR}/probes/cmsis_dap.cfg"
+	board_runner_args(openocd "--config=${OPENOCD_CONFIG_DIR}/probes/${OPENOCD_INTERFACE}.cfg"
 				    "--config=${OPENOCD_CONFIG_DIR}/soc/hpm5300.cfg"
 				    "--config=${OPENOCD_CONFIG_DIR}/boards/hpm5300evk.cfg"
 				    "--openocd-search=${OPENOCD_CONFIG_DIR}"

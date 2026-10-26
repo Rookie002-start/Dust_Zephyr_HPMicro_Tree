@@ -36,6 +36,54 @@
 		status = "disabled";
 		#pwm-cells = <3>;
 	};
+
+	/* SoC dtsi（hpm53xx.dtsi）只声明到 mcan0 / uart0..4，这里补齐板上实际用到的：
+	 *   mcan1 0xF0284000 IRQ36 · mcan2 0xF0288000 IRQ37 · mcan3 0xF028C000 IRQ38
+	 *   uart2 0xF0048000 IRQ15(UART2) + IRQ5(idletimer)
+	 * MCAN 时钟用 OSC24M/1：24MHz ÷ 1Mbps = 24 tq，位时序精确（PLL1 无法整除）。
+	 */
+	mcan1: can@f0284000 {
+		compatible = "hpmicro,hpm-mcan";
+		reg = <0xf0284000 DT_SIZE_K(16)>;
+		interrupts = <36 1>;
+		interrupt-parent = <&plic>;
+		clk-name = <CLOCK_CAN1>;
+		clk-source = <CLK_SRC_OSC24M>;
+		clk-divider = <1>;
+		status = "disabled";
+	};
+
+	mcan2: can@f0288000 {
+		compatible = "hpmicro,hpm-mcan";
+		reg = <0xf0288000 DT_SIZE_K(16)>;
+		interrupts = <37 1>;
+		interrupt-parent = <&plic>;
+		clk-name = <CLOCK_CAN2>;
+		clk-source = <CLK_SRC_OSC24M>;
+		clk-divider = <1>;
+		status = "disabled";
+	};
+
+	mcan3: can@f028c000 {
+		compatible = "hpmicro,hpm-mcan";
+		reg = <0xf028c000 DT_SIZE_K(16)>;
+		interrupts = <38 1>;
+		interrupt-parent = <&plic>;
+		clk-name = <CLOCK_CAN3>;
+		clk-source = <CLK_SRC_OSC24M>;
+		clk-divider = <1>;
+		status = "disabled";
+	};
+
+	uart2: serial@f0048000 {
+		compatible = "hpmicro,hpm-uart";
+		reg = <0xf0048000 0x1000>;
+		interrupts = <15 1>, <5 1>;
+		interrupt-names = "uart", "idletimer";
+		clocks = <&clk CLOCK_UART2 CLK_SRC_PLL1_CLK0 6>;
+		interrupt-parent = <&plic>;
+		status = "disabled";
+	};
 };
 
 &uart0 {
@@ -76,6 +124,37 @@
 	status = "disabled";
 	pinctrl-0 = <&pinmux_mcan0_txrx>;
 	pinctrl-names = "default";
+};
+
+&mcan1 {
+	status = "disabled";
+	pinctrl-0 = <&pinmux_mcan1_txrx>;
+	pinctrl-names = "default";
+};
+
+&mcan2 {
+	status = "disabled";
+	pinctrl-0 = <&pinmux_mcan2_txrx>;
+	pinctrl-names = "default";
+};
+
+&mcan3 {
+	status = "disabled";
+	pinctrl-0 = <&pinmux_mcan3_txrx>;
+	pinctrl-names = "default";
+};
+
+/* 板载 "UART2"/H4 连接器（console）：H4.3 = 板侧 RXD，H4.4 = 板侧 TXD */
+&uart2 {
+	status = "disabled";
+	current-speed = <921600>;
+	pinctrl-0 = <&pinmux_uart2>;
+	pinctrl-names = "default";
+	/* DMA 通道 4/5（原本是 uart3 那一对，uart3 已停用不再启用）。
+	 * 通道号只是 HDMA 的槽位，0x18/0x19 = UART2_RX/TX（DMAMUX 源）必须跟外设对应。
+	 * 这样 0/1 留给 uart0，通道分配不再重复。 */
+	dmas = <&hdma 4 0x18>, <&hdma 5 0x19>;
+	dma-names = "rx", "tx";
 };
 
 &xpi0 {

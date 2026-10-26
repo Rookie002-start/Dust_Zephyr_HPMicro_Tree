@@ -1,0 +1,20 @@
+# Copyright (c) 2026 HPMicro
+# SPDX-License-Identifier: Apache-2.0
+
+identifier: hpm5e3y
+name: HPMicro HPM5E3Y
+type: mcu
+arch: riscv32
+toolchain:
+  - zephyr
+  - cross-compile
+ram: 128
+flash: 1024
+supported:
+  - gpio
+  - uart
+  - mcan
+  - spi
+  - pwm
+  - dma
+vendor: hpmicro

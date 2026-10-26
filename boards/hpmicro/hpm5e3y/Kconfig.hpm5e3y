@@ -1,0 +1,6 @@
+# Copyright (c) 2026 HPMicro
+# SPDX-License-Identifier: Apache-2.0
+
+config BOARD_HPM5E3Y
+	select SOC_HPM5E3Y
+	select ZEPHYR_HPM_SDK_MODULE

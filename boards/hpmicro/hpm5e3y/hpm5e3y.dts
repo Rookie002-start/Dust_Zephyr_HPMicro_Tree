@@ -1,0 +1,95 @@
+/*
+ * Copyright (c) 2026 HPMicro
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/dts-v1/;
+
+#include <zephyr/dt-bindings/gpio/gpio.h>
+#include <hpmicro/hpm5e3y.dtsi>
+#include "hpm5e3y-pinctrl.dtsi"
+
+/ {
+	model = "HPMicro HPM5E3Y ICB";
+	compatible = "HPMicro,hpm5e3y";
+
+	chosen {
+		zephyr,console = &uart0;
+		zephyr,shell-uart = &uart0;
+		zephyr,sram = &dlm;
+		zephyr,flash = &flash0;
+		zephyr,itcm = &ilm;
+		zephyr,code-partition = &slot0_partition;
+		zephyr,flash-controller = &xpi0;
+	};
+};
+
+&uart0 {
+	status = "okay";
+	current-speed = <115200>;
+	pinctrl-0 = <&pinmux_uart0>;
+	pinctrl-names = "default";
+};
+
+&gpioa {
+	status = "okay";
+	pinctrl-0 = <&pinmux_gpioa>;
+	pinctrl-names = "default";
+};
+
+&gpiob {
+	status = "disabled";
+	pinctrl-0 = <&pinmux_gpiob>;
+	pinctrl-names = "default";
+};
+
+&xpi0 {
+	status = "okay";
+
+	flash0: flash@80000000 {
+		compatible = "hpmicro,hpmicro-flash", "soc-nv-flash";
+		reg = <0x80000000 DT_SIZE_M(1)>;
+		status = "okay";
+		erase-block-size = <4096>;
+		write-block-size = <1>;
+		nor-cfg-opt-hdr = <0xfcf90002>;
+		nor-cfg-opt-opt0 = <0x05>;
+		nor-cfg-opt-opt1 = <0x1000>;
+
+		partitions {
+			compatible = "fixed-partitions";
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			boot_partition: partition@0 {
+				label = "mcuboot";
+				reg = <0x0 DT_SIZE_K(64)>;
+			};
+
+			slot0_partition: partition@10000 {
+				label = "image-0";
+				reg = <0x10000 DT_SIZE_K(448)>;
+			};
+
+			slot1_partition: partition@80000 {
+				label = "image-1";
+				reg = <0x80000 DT_SIZE_K(448)>;
+			};
+
+			scratch_partition: partition@f0000 {
+				label = "image-scratch";
+				reg = <0xf0000 DT_SIZE_K(32)>;
+			};
+
+			storage_partition: partition@f8000 {
+				label = "storage";
+				reg = <0xf8000 DT_SIZE_K(32)>;
+			};
+		};
+	};
+};
+
+&mtimer {
+	compatible = "riscv,machine-timer", "andestech,machine-timer";
+	reg-names = "mtime", "mtimecmp";
+};
