@@ -1,0 +1,80 @@
+# HPM5E00 系列 SoC 接入（HPM5E3Y，SDK 编译目标绑定 HPM5E31）— 挂载点修改
+# 改动：soc/hpmicro/Kconfig*、CMakeLists.txt、soc.yml、modules/hpm_sdk/CMakeLists.txt(SOC别名)
+diff --git a/soc/hpmicro/Kconfig b/soc/hpmicro/Kconfig
+--- a/soc/hpmicro/Kconfig
++++ b/soc/hpmicro/Kconfig
+@@ -11,6 +11,8 @@ if SOC_FAMILY_HPM
+ rsource "${ZEPHYR_SDK_GLUE_MODULE_DIR}/soc/hpmicro/*/Kconfig"
+ # SELF-MAINTAINED — 用户自研 HPM5300 SoC 支持（sdk_glue_user 小树）
+ rsource "${ZEPHYR_SDK_GLUE_MODULE_DIR}/../sdk_glue_user/soc/hpmicro/HPM5300/Kconfig"
++# SELF-MAINTAINED — 用户自研 HPM5E00 SoC 支持（sdk_glue_user 小树）
++rsource "${ZEPHYR_SDK_GLUE_MODULE_DIR}/../sdk_glue_user/soc/hpmicro/HPM5E00/Kconfig"
+ 
+ config USE_DT_CODE_PARTITION
+ 	default y if BOOTLOADER_MCUBOOT
+
+diff --git a/soc/hpmicro/Kconfig.soc b/soc/hpmicro/Kconfig.soc
+--- a/soc/hpmicro/Kconfig.soc
++++ b/soc/hpmicro/Kconfig.soc
+@@ -10,3 +10,5 @@ config SOC_FAMILY
+ source "${ZEPHYR_SDK_GLUE_MODULE_DIR}/soc/hpmicro/*/Kconfig.soc"
+ # SELF-MAINTAINED — 用户自研 HPM5300 SoC 支持（sdk_glue_user 小树）
+ source "${ZEPHYR_SDK_GLUE_MODULE_DIR}/../sdk_glue_user/soc/hpmicro/HPM5300/Kconfig.soc"
++# SELF-MAINTAINED — 用户自研 HPM5E00 SoC 支持（sdk_glue_user 小树）
++source "${ZEPHYR_SDK_GLUE_MODULE_DIR}/../sdk_glue_user/soc/hpmicro/HPM5E00/Kconfig.soc"
+
+diff --git a/soc/hpmicro/Kconfig.defconfig b/soc/hpmicro/Kconfig.defconfig
+--- a/soc/hpmicro/Kconfig.defconfig
++++ b/soc/hpmicro/Kconfig.defconfig
+@@ -10,6 +10,8 @@ if SOC_FAMILY_HPM
+ rsource "${ZEPHYR_SDK_GLUE_MODULE_DIR}/soc/hpmicro/*/Kconfig.defconfig.series"
+ # SELF-MAINTAINED — 用户自研 HPM5300 SoC 支持（sdk_glue_user 小树）
+ rsource "${ZEPHYR_SDK_GLUE_MODULE_DIR}/../sdk_glue_user/soc/hpmicro/HPM5300/Kconfig.defconfig.series"
++# SELF-MAINTAINED — 用户自研 HPM5E00 SoC 支持（sdk_glue_user 小树）
++rsource "${ZEPHYR_SDK_GLUE_MODULE_DIR}/../sdk_glue_user/soc/hpmicro/HPM5E00/Kconfig.defconfig.series"
+ 
+ config SERIAL_INIT_PRIORITY
+     default KERNEL_INIT_PRIORITY_DEVICE
+
+diff --git a/soc/hpmicro/CMakeLists.txt b/soc/hpmicro/CMakeLists.txt
+--- a/soc/hpmicro/CMakeLists.txt
++++ b/soc/hpmicro/CMakeLists.txt
+@@ -5,6 +5,9 @@ add_subdirectory(common)
+ if(SOC_SERIES STREQUAL "HPM5300")
+ 	# SELF-MAINTAINED — 用户自研 HPM5300 SoC 支持（sdk_glue_user 小树）
+ 	add_subdirectory(${ZEPHYR_SDK_GLUE_MODULE_DIR}/../sdk_glue_user/soc/hpmicro/HPM5300 ${CMAKE_CURRENT_BINARY_DIR}/HPM5300)
++elseif(SOC_SERIES STREQUAL "HPM5E00")
++	# SELF-MAINTAINED — 用户自研 HPM5E00 SoC 支持（sdk_glue_user 小树）
++	add_subdirectory(${ZEPHYR_SDK_GLUE_MODULE_DIR}/../sdk_glue_user/soc/hpmicro/HPM5E00 ${CMAKE_CURRENT_BINARY_DIR}/HPM5E00)
+ else()
+ 	add_subdirectory(${SOC_SERIES})
+ endif()
+
+diff --git a/soc/hpmicro/soc.yml b/soc/hpmicro/soc.yml
+--- a/soc/hpmicro/soc.yml
++++ b/soc/hpmicro/soc.yml
+@@ -7,6 +7,9 @@ family:
+     - name: hpm5321
+     - name: hpm5331
+     - name: hpm5361
++  - name: hpm5e00
++    socs:
++    - name: hpm5e3y
+   - name: hpm6200
+     socs:
+     - name: hpm6240
+
+diff --git a/modules/hpm_sdk/CMakeLists.txt b/modules/hpm_sdk/CMakeLists.txt
+--- a/modules/hpm_sdk/CMakeLists.txt
++++ b/modules/hpm_sdk/CMakeLists.txt
+@@ -10,6 +10,10 @@ endif()
+ set(HPM_SDK_BINARY_DIR ${CMAKE_BINARY_DIR}/hpm_sdk)
+ set(HPM_BOARD_DIR ${CONFIG_BOARD})
+ string(TOUPPER ${SOC_NAME} HPM_SOC_TOUPPER)
++# SELF-MAINTAINED - HPM5E3Y 与 HPM5E31 寄存器级完全一致，hpm_sdk 仅有 HPM5E31 编译目标
++if(HPM_SOC_TOUPPER STREQUAL "HPM5E3Y")
++	set(HPM_SOC_TOUPPER "HPM5E31")
++endif()
+ set(HPM_SOC ${HPM_SOC_TOUPPER})
+ string(TOUPPER ${SOC_SERIES} HPM_SOC_SERIES_TOUPPER)
+ set(HPM_SOC_SERIES ${HPM_SOC_SERIES_TOUPPER})

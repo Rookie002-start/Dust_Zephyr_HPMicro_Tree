@@ -1,49 +1,91 @@
-#!/bin/bash
-# apply-patches.sh — 应用所有官方仓库补丁（HPM 底层定制）
-# 用法：
-#   ./apply-patches.sh --zephyr <zephyr根> --sdk-env <sdk_env根> \
-#                      --sdk-glue <sdk_glue根> --cherryusb <cherryusb根>
-# 每个 patch 先 --check 后 apply，失败即 exit(1)，防止官方仓库"改一半"。
+#!/usr/bin/env bash
+# Apply the HPM changes to clean community SDK checkouts.
+# Zephyr itself is patched by the sibling Dust_Zephyr_Tree repository.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PATCHES="$ROOT/zephyr-patches"
 
-ZEPHYR=""; SDK_ENV=""; SDK_GLUE=""; CHERRYUSB=""
+SDK_ENV="$ROOT/../sdk_env"
+SDK_GLUE="$ROOT/../sdk_glue"
+CHERRYUSB=""
+CHECK_ONLY=0
+
+usage() {
+  cat <<'EOF'
+Usage: apply-patches.sh [options]
+
+Options:
+  --sdk-env <checkout>   sdk_env checkout (default: ../sdk_env)
+  --sdk-glue <checkout>  zephyr_sdk_glue checkout (default: ../sdk_glue)
+  --cherryusb <path>     Optional CherryUSB checkout
+  --check                Check applicability without modifying checkouts
+  -h, --help             Show this help
+EOF
+}
+
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --zephyr)    ZEPHYR="$2";    shift 2 ;;
     --sdk-env)   SDK_ENV="$2";   shift 2 ;;
     --sdk-glue)  SDK_GLUE="$2";  shift 2 ;;
     --cherryusb) CHERRYUSB="$2"; shift 2 ;;
-    *) echo "未知参数: $1"; exit 1 ;;
+    --check)     CHECK_ONLY=1;   shift ;;
+    -h|--help)   usage; exit 0 ;;
+    *) echo "未知参数: $1" >&2; usage >&2; exit 2 ;;
   esac
 done
 
-for v in ZEPHYR SDK_ENV SDK_GLUE CHERRYUSB; do
-  if [[ -z "${!v}" ]]; then
-    echo "缺少 --${v,,} 参数"; exit 1
+for repo in "$SDK_ENV" "$SDK_GLUE"; do
+  if ! git -C "$repo" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    echo "不是 Git 仓库: $repo" >&2
+    exit 1
   fi
 done
 
 apply_one() {
   local repo="$1" patch="$2"
-  echo "==> $patch"
-  git -C "$repo" apply --check "$patch" || { echo "CHECK FAIL: $patch"; exit 1; }
-  git -C "$repo" apply "$patch"       || { echo "APPLY FAIL: $patch"; exit 1; }
+
+  if git -C "$repo" apply --reverse --check "$patch" >/dev/null 2>&1; then
+    echo "already applied: $(basename "$patch")"
+    return
+  fi
+
+  git -C "$repo" apply --check "$patch"
+  if [[ "$CHECK_ONLY" -eq 1 ]]; then
+    echo "applicable: $(basename "$patch")"
+    return
+  fi
+
+  git -C "$repo" apply "$patch"
+  echo "applied: $(basename "$patch")"
 }
 
-apply_one "$ZEPHYR"    "$PATCHES/zephyr/0001-intc_plic-spurious-ack.diff"
-apply_one "$SDK_ENV"   "$PATCHES/sdk_env/0001-hpm_misc-dlm-ilm.diff"
+apply_dir() {
+  local repo="$1" dir="$2"
+  shopt -s nullglob
+  local patches=("$dir"/*.diff)
+  shopt -u nullglob
 
-apply_one "$SDK_GLUE"  "$PATCHES/sdk_glue/0001-drivers-serial-hw-rx-idle.diff"
-apply_one "$SDK_GLUE"  "$PATCHES/sdk_glue/0002-drivers-can-mcan-fixes.diff"
-apply_one "$SDK_GLUE"  "$PATCHES/sdk_glue/0003-drivers-gpio-interrupt.diff"
-apply_one "$SDK_GLUE"  "$PATCHES/sdk_glue/0004-drivers-usb-udc-cherryusb.diff"
-apply_one "$SDK_GLUE"  "$PATCHES/sdk_glue/0005-drivers-others.diff"
-apply_one "$SDK_GLUE"  "$PATCHES/sdk_glue/0006-dts-hpm53xx-osc-clocks.diff"
-apply_one "$SDK_GLUE"  "$PATCHES/sdk_glue/0007-soc-boards.diff"
+  if [[ ${#patches[@]} -eq 0 ]]; then
+    echo "没有找到补丁: $dir" >&2
+    exit 1
+  fi
 
-apply_one "$CHERRYUSB" "$PATCHES/cherryusb/0001-usb_osal-array_size.diff"
+  local patch
+  for patch in "${patches[@]}"; do
+    apply_one "$repo" "$patch"
+  done
+}
 
-echo "全部 10 个 patch 应用成功。"
+apply_dir "$SDK_ENV"  "$PATCHES/sdk_env"
+apply_dir "$SDK_GLUE" "$PATCHES/sdk_glue"
+
+if [[ -n "$CHERRYUSB" ]]; then
+  if ! git -C "$CHERRYUSB" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    echo "不是 Git 仓库: $CHERRYUSB" >&2
+    exit 1
+  fi
+  apply_dir "$CHERRYUSB" "$PATCHES/cherryusb"
+fi
+
+echo "HPM 社区仓库补丁处理完成。Zephyr 补丁请运行 Dust_Zephyr_Tree/patches/apply-zephyr-patches.sh。"

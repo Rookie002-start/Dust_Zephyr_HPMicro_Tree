@@ -1,38 +1,40 @@
-# apply-patches.ps1 — 应用所有官方仓库补丁（Windows 本地）
-# 用法：
-#   .\apply-patches.ps1 -Zephyr E:\Zephyr\zephyr -SdkEnv E:\Zephyr_HPMicro\sdk_env `
-#     -SdkGlue E:\Zephyr_HPMicro\sdk_glue -CherryUsb E:\Zephyr_HPMicro\modules\lib\CherryUSB
+# apply-patches.ps1 — 应用 HPM 社区仓库补丁（Windows 本地）
+# Zephyr 补丁由同级的 Dust_Zephyr_Tree 仓库管理。
 param(
-  [string]$Zephyr,
   [string]$SdkEnv,
   [string]$SdkGlue,
-  [string]$CherryUsb
+  [string]$CherryUsb,
+  [switch]$Check
 )
 $ErrorActionPreference = "Stop"
 $Root    = Split-Path -Parent $MyInvocation.MyCommand.Path
 $Patches = Join-Path $Root "zephyr-patches"
 
-foreach ($v in @("Zephyr","SdkEnv","SdkGlue","CherryUsb")) {
-  if (-not (Get-Variable $v -ValueOnly)) { throw "缺少 -$v 参数" }
-}
+if (-not $SdkEnv)  { $SdkEnv  = Join-Path $Root "../sdk_env" }
+if (-not $SdkGlue) { $SdkGlue = Join-Path $Root "../sdk_glue" }
 
 function Apply-One([string]$Repo, [string]$Patch) {
   Write-Host "==> $Patch"
+  git -C $Repo apply --reverse --check $Patch 2>$null
+  if ($LASTEXITCODE -eq 0) {
+    Write-Host "already applied: $Patch"
+    return
+  }
   git -C $Repo apply --check $Patch
   if ($LASTEXITCODE -ne 0) { throw "CHECK FAIL: $Patch" }
+  if ($Check) { return }
   git -C $Repo apply $Patch
   if ($LASTEXITCODE -ne 0) { throw "APPLY FAIL: $Patch" }
 }
 
-Apply-One $Zephyr    (Join-Path $Patches "zephyr/0001-intc_plic-spurious-ack.diff")
-Apply-One $SdkEnv    (Join-Path $Patches "sdk_env/0001-hpm_misc-dlm-ilm.diff")
-Apply-One $SdkGlue   (Join-Path $Patches "sdk_glue/0001-drivers-serial-hw-rx-idle.diff")
-Apply-One $SdkGlue   (Join-Path $Patches "sdk_glue/0002-drivers-can-mcan-fixes.diff")
-Apply-One $SdkGlue   (Join-Path $Patches "sdk_glue/0003-drivers-gpio-interrupt.diff")
-Apply-One $SdkGlue   (Join-Path $Patches "sdk_glue/0004-drivers-usb-udc-cherryusb.diff")
-Apply-One $SdkGlue   (Join-Path $Patches "sdk_glue/0005-drivers-others.diff")
-Apply-One $SdkGlue   (Join-Path $Patches "sdk_glue/0006-dts-hpm53xx-osc-clocks.diff")
-Apply-One $SdkGlue   (Join-Path $Patches "sdk_glue/0007-soc-boards.diff")
-Apply-One $CherryUsb (Join-Path $Patches "cherryusb/0001-usb_osal-array_size.diff")
+function Apply-Dir([string]$Repo, [string]$Dir) {
+  $patches = Get-ChildItem -Path $Dir -Filter "*.diff" | Sort-Object Name
+  if ($patches.Count -eq 0) { throw "没有找到补丁: $Dir" }
+  foreach ($patch in $patches) { Apply-One $Repo $patch.FullName }
+}
 
-Write-Host "全部 10 个 patch 应用成功。"
+Apply-Dir $SdkEnv  (Join-Path $Patches "sdk_env")
+Apply-Dir $SdkGlue (Join-Path $Patches "sdk_glue")
+if ($CherryUsb) { Apply-Dir $CherryUsb (Join-Path $Patches "cherryusb") }
+
+Write-Host "HPM 社区仓库补丁处理完成。"

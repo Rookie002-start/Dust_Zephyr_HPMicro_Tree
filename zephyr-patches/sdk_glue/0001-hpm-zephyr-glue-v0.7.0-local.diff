@@ -1,0 +1,2262 @@
+diff --git a/boards/hpmicro/hpm6200evk/board.yml b/boards/hpmicro/hpm6200evk/board.yml
+index e8114bd5b4c72d7e38691a298f89f4b07caedd86..2b975f8c720b2ebd9b5e224b674d2bd363d599bd 100644
+--- a/boards/hpmicro/hpm6200evk/board.yml
++++ b/boards/hpmicro/hpm6200evk/board.yml
+@@ -1,5 +1,6 @@
+ board:
+   name: hpm6200evk
++  full_name: HPMicro HPM6200 EVK
+   vendor: hpmicro
+   socs:
+     - name: hpm6280
+diff --git a/boards/hpmicro/hpm6750evk2/board.yml b/boards/hpmicro/hpm6750evk2/board.yml
+index d93e3f8cf0bbf54a0e3638066357084e19775527..bf4a1eb9d6cd35d259e6879d2ad9063c31aaebdf 100644
+--- a/boards/hpmicro/hpm6750evk2/board.yml
++++ b/boards/hpmicro/hpm6750evk2/board.yml
+@@ -1,5 +1,6 @@
+ board:
+   name: hpm6750evk2
++  full_name: HPMicro HPM6750 EVK2
+   vendor: hpmicro
+   socs:
+     - name: hpm6750
+diff --git a/boards/hpmicro/hpm6800evk/board.yml b/boards/hpmicro/hpm6800evk/board.yml
+index d1f4c986e02a952bfb950b22f9de8ee0699f3728..52aeab980ffdbb9c8d7e2f674714898f2f9acbe7 100644
+--- a/boards/hpmicro/hpm6800evk/board.yml
++++ b/boards/hpmicro/hpm6800evk/board.yml
+@@ -1,5 +1,6 @@
+ board:
+   name: hpm6800evk
++  full_name: HPMicro HPM6800 EVK
+   vendor: hpmicro
+   socs:
+     - name: hpm6880
+diff --git a/boards/hpmicro/hpm6e00evk/board.yml b/boards/hpmicro/hpm6e00evk/board.yml
+index f1e42bdd27374a966674288bc8b611eb4c054d43..a117be1985ac700a5959384040b337f41fd1770e 100644
+--- a/boards/hpmicro/hpm6e00evk/board.yml
++++ b/boards/hpmicro/hpm6e00evk/board.yml
+@@ -1,5 +1,6 @@
+ board:
+   name: hpm6e00evk
++  full_name: HPMicro HPM6E00 EVK
+   vendor: hpmicro
+   socs:
+     - name: hpm6e80
+diff --git a/drivers/CMakeLists.txt b/drivers/CMakeLists.txt
+index 106b89143238debaa15d25ff1c2a1f0ade7fff9e..a1614257f91af8886a9553dd8a9bf902e0301269 100644
+--- a/drivers/CMakeLists.txt
++++ b/drivers/CMakeLists.txt
+@@ -3,23 +3,25 @@
+ 
+ zephyr_include_directories(${ZEPHYR_BASE}/drivers)
+ 
+-add_subdirectory(clock_control)
+-add_subdirectory(dma)
+-add_subdirectory(serial)
+-add_subdirectory(pinctrl)
+-add_subdirectory(gpio)
+-add_subdirectory(can)
+-add_subdirectory(spi)
+-add_subdirectory(pwm)
+-add_subdirectory(adc)
+-add_subdirectory(display)
+-
+-add_subdirectory(i2c)
+-add_subdirectory(video)
+-add_subdirectory(sdhc)
+-add_subdirectory(usb/udc)
++# 仅当对应子系统使能时才加入驱动子目录（与 Zephyr drivers/CMakeLists.txt 一致），
++# 否则 zephyr_library_amend() 找不到基础库会直接报错
++add_subdirectory_ifdef(CONFIG_CLOCK_CONTROL clock_control)
++add_subdirectory_ifdef(CONFIG_DMA dma)
++add_subdirectory_ifdef(CONFIG_SERIAL serial)
++add_subdirectory_ifdef(CONFIG_PINCTRL pinctrl)
++add_subdirectory_ifdef(CONFIG_GPIO gpio)
++add_subdirectory_ifdef(CONFIG_CAN can)
++add_subdirectory_ifdef(CONFIG_SPI spi)
++add_subdirectory_ifdef(CONFIG_PWM pwm)
++add_subdirectory_ifdef(CONFIG_ADC adc)
++add_subdirectory_ifdef(CONFIG_DISPLAY display)
++add_subdirectory_ifdef(CONFIG_I2C i2c)
++add_subdirectory_ifdef(CONFIG_VIDEO video)
++add_subdirectory_ifdef(CONFIG_SDHC sdhc)
++add_subdirectory_ifdef(CONFIG_UDC_DRIVER usb/udc)
+ if (CONFIG_CHERRYUSB_HPMICRO)
+     add_subdirectory(usb/cherryusb)
+ endif()
+-add_subdirectory(ethernet)
+-add_subdirectory(flash)
++add_subdirectory_ifdef(CONFIG_ETH_DRIVER ethernet)
++add_subdirectory_ifdef(CONFIG_FLASH flash)
++add_subdirectory_ifdef(CONFIG_WATCHDOG watchdog)
+diff --git a/drivers/Kconfig b/drivers/Kconfig
+index 2c9d5dfc2ae4508dfaeb886a22f32ff66cd88499..e0a3a90d0924e5820c8e849d948ccd62c7ca1155 100644
+--- a/drivers/Kconfig
++++ b/drivers/Kconfig
+@@ -20,4 +20,5 @@ rsource "usb/udc/Kconfig.hpmicro"
+ rsource "usb/cherryusb/Kconfig.hpmicro"
+ rsource "ethernet/Kconfig.hpmicro"
+ rsource "flash/Kconfig.hpmicro"
++rsource "watchdog/Kconfig.hpmicro"
+ endmenu
+diff --git a/drivers/can/CMakeLists.txt b/drivers/can/CMakeLists.txt
+index 6e78b193a8c456ef21e2ffe3e8b7ecae748a3225..abda247b6b84348542477e39840a64a9bd1d36f7 100644
+--- a/drivers/can/CMakeLists.txt
++++ b/drivers/can/CMakeLists.txt
+@@ -1,6 +1,12 @@
+ # Copyright (c) 2023-2024 HPMicro
+ # SPDX-License-Identifier: Apache-2.0
+ 
+-zephyr_library_amend()
++# CONFIG_CAN must be enabled for Zephyr's drivers/can to create the
++# drivers__can library target. If it's not set, create our own target.
++if(CONFIG_CAN)
++  zephyr_library_amend()
++else()
++  zephyr_library()
++endif()
+ zephyr_library_sources_ifdef(CONFIG_CAN_HPMICRO can_hpmicro.c)
+ zephyr_library_sources_ifdef(CONFIG_MCAN_HPMICRO mcan_hpmicro.c)
+\ No newline at end of file
+diff --git a/drivers/can/Kconfig.hpmicro b/drivers/can/Kconfig.hpmicro
+index ae62d97dbb2d7c674e68897cc507dfb3fa14ad6e..55864ffa5baeffe7fc4206d67876ac923d54432e 100644
+--- a/drivers/can/Kconfig.hpmicro
++++ b/drivers/can/Kconfig.hpmicro
+@@ -9,6 +9,7 @@ config CAN_HPMICRO
+ 	bool "HPMICRO CAN driver"
+ 	default y
+ 	depends on DT_HAS_HPMICRO_HPM_CAN_ENABLED
++	select CAN
+     select HAS_HPMSDK_CAN
+     help
+         Enable the HPMICRO CAN driver
+@@ -19,6 +20,7 @@ config MCAN_HPMICRO
+ 	bool "HPMICRO MCAN driver"
+ 	default y
+ 	depends on DT_HAS_HPMICRO_HPM_MCAN_ENABLED
++	select CAN
+     select HAS_HPMSDK_MCAN
+     help
+         Enable the HPMICRO MCAN driver
+diff --git a/drivers/can/mcan_hpmicro.c b/drivers/can/mcan_hpmicro.c
+index a5327dfecad82df0f726b330cfc68f85886774ef..a390be150758da69fb71deb00a7f4f3aa140707a 100644
+--- a/drivers/can/mcan_hpmicro.c
++++ b/drivers/can/mcan_hpmicro.c
+@@ -28,19 +28,41 @@
+ #define HPM_MCAN_FD_BITRATE_MAX (8000000UL) /* 8Mbps */
+ 
+ static mcan_rx_message_t s_can_rx_buf;
+-static volatile bool has_sent_out;
+-
+ #define HPM_MCAN_NUM_TX_BUF_ELEMENTS (32U)
+ #define HPM_MCAN_NUM_RX_BUF_ELEMENTS (16U)
+ 
++/* 临时诊断计数器（用调试器读 RAM 排查 TX 完成中断/事件回收是否正常，定位完可删） */
++volatile uint32_t hpm_mcan_dbg_isr;
++volatile uint32_t hpm_mcan_dbg_tc_isr;
++volatile uint32_t hpm_mcan_dbg_tc_done;
++volatile uint32_t hpm_mcan_dbg_send_ok;
++volatile uint32_t hpm_mcan_dbg_send_fail;
++volatile uint32_t hpm_mcan_dbg_rx_pop;
++volatile uint32_t hpm_mcan_dbg_sem_timeout;
++
++/* TX FIFO 深度：本驱动用 SDK 默认 RAM 配置（mcan_get_default_ram_config(..., true)），
++ * FD 分支给的是 MCAN_TXBUF_SIZE_CANFD_DEFAULT/2 个 TX FIFO 元素（当前 = 4），
++ * 且 txfifo_or_txqueue_mode = FIFO —— 也就是说寄存器 TXBC.TFQM=0、TFQS=4，
++ * 发送必须走 mcan_transmit_via_txfifo_nonblocking()（往 FIFO put index 写），
++ * 不能再用 mcan_transmit_via_txbuf_nonblocking(index)（那是"专用 TXBUF"模式的 API，
++ * 在 FIFO 模式下会写到硬件不读的那块 RAM，请求加到 FIFO 上 → 总线出 FORM 错误、
++ * 真正的帧发不出去，上层表现为"TX 缓冲区一直满"）。 */
++#define HPM_MCAN_NUM_TX_FIFO_ELEMENTS (MCAN_TXBUF_SIZE_CANFD_DEFAULT / 2U)
++static_assert(HPM_MCAN_NUM_TX_BUF_ELEMENTS >= HPM_MCAN_NUM_TX_FIFO_ELEMENTS,
++              "tx_fin_cb/tx_fin_sem 数组要能容纳整个 TX FIFO");
++
++/* bus-off 自动恢复的最小重试间隔，见 hpm_mcan_try_bus_off_recover() */
++#define HPM_MCAN_BUS_OFF_RECOVER_INTERVAL_MS (100)
++
+ #if defined(MCAN_SOC_MSG_BUF_IN_AHB_RAM) && (MCAN_SOC_MSG_BUF_IN_AHB_RAM == 1)
+-ATTR_PLACE_AT("AHB_SRAM") uint32_t board_app_mcan_msg_buf[MCAN_MSG_BUF_SIZE_IN_WORDS];
+-static mcan_msg_buf_attr_t s_can_info[] = {
+-    {
+-        .ram_base = (uint32_t) &board_app_mcan_msg_buf,
+-        .ram_size = sizeof(board_app_mcan_msg_buf),
+-    },
+-};
++/* HPM5361 的 MCAN message RAM 位于 AHB SRAM（0xF0400000 起，共 32KB）。
++ * 每个 MCAN 实例必须占一段**独立**的 RAM：mcan_init() 会把自己那段 RAM 清零并
++ * 重排 filter/FIFO，多个实例共用同一段会互相踩。这里按实例号各留一块，
++ * 在 hpm_mcan_init() 里用 mcan_get_instance_from_base() 选中对应那块。
++ */
++#define HPM_MCAN_MSG_BUF_INSTANCE_COUNT MCAN_SOC_MAX_COUNT
++ATTR_PLACE_AT("AHB_SRAM") uint32_t
++    board_app_mcan_msg_buf[HPM_MCAN_MSG_BUF_INSTANCE_COUNT][MCAN_MSG_BUF_SIZE_IN_WORDS];
+ #endif
+ 
+ /* Default baudrate: 1Mbps @80MHz CAN clock */
+@@ -86,6 +108,12 @@ struct hpm_mcan_data {
+     /* TX callback */
+     can_tx_callback_t tx_fin_cb[HPM_MCAN_NUM_TX_BUF_ELEMENTS];
+     void *tx_fin_cb_arg[HPM_MCAN_NUM_TX_BUF_ELEMENTS];
++    /* FIFO 模式下硬件按入队顺序发送、完成顺序 == 入队顺序，所以发送端口和
++     * TX 完成中断各维护一个下标，按软件 FIFO 一一配对（不用依赖 TXBTO 的位含义）。 */
++    uint32_t tx_cb_head;
++    uint32_t tx_cb_tail;
++    /* 上次看到的 TXBTO 置位集合（TXBTO 只读、无法 W1C，用增量判断新完成的元素） */
++    uint32_t txbto_seen;
+ 
+     /* RX callback */
+     can_rx_callback_t rx_cb_ext[HPM_CAN_EXT_FILTER_NUM_MAX];
+@@ -98,6 +126,9 @@ struct hpm_mcan_data {
+     can_state_change_callback_t state_change_cb;
+     void *state_change_cb_data;
+     bool started;
++
++    /* 上次自动 bus-off 恢复的时间戳（限流用，见 hpm_mcan_try_bus_off_recover） */
++    int64_t bus_off_recover_ms;
+ };
+ 
+ #define DT_DRV_COMPAT hpmicro_hpm_mcan
+@@ -106,8 +137,42 @@ LOG_MODULE_REGISTER(hpmicro_hpm_mcan, CONFIG_CAN_LOG_LEVEL);
+ static int hpm_mcan_get_state(const struct device *dev,
+                              enum can_state *state,
+                              struct can_bus_err_cnt *err_cnt);
+-static void hpm_mcan_tc_event_handler(const struct device *dev, uint32_t index);
++static void hpm_mcan_tc_event_handler(const struct device *dev);
+ static void hpm_mcan_state_change_handler(const struct device *dev);
++static void hpm_mcan_try_bus_off_recover(const struct device *dev);
++
++/**
++ * @brief 尝试从 bus-off 状态恢复（自动恢复模式）
++ *
++ * Zephyr 的约定：CONFIG_CAN_MANUAL_RECOVERY_MODE 没打开时，"从 bus-off 里救
++ * 回来"是驱动的责任（打开时才是应用自己调 can_recover()）。
++ *
++ * 实现上只清 CCCR.INIT 一个位：M_CAN 随后由硬件按规范完成恢复流程
++ * （等 128 × 11 个隐性位 → 重新 error-active，并清零 TEC/REC），
++ * 不需要重跑 mcan_init()，message RAM / filter / FIFO 配置都不动，
++ * 所以可以直接在 bus-off 中断里调用。
++ *
++ * 用时间戳限流：总线持续故障时（例如对端没上电），bus-off → 恢复 → 再
++ * bus-off 会以毫秒级周期循环；限流后最多 100ms 重试一次，既不丢功能，
++ * 对端真的一上线也能在 100ms 内自己接回总线。
++ */
++static void hpm_mcan_try_bus_off_recover(const struct device *dev)
++{
++#if !defined(CONFIG_CAN_MANUAL_RECOVERY_MODE)
++    struct hpm_mcan_data *data = dev->data;
++    const struct hpm_mcan_config *cfg = dev->config;
++    const int64_t now = k_uptime_get();
++
++    if ((now - data->bus_off_recover_ms) < HPM_MCAN_BUS_OFF_RECOVER_INTERVAL_MS) {
++        return;
++    }
++    data->bus_off_recover_ms = now;
++
++    cfg->base->CCCR &= ~MCAN_CCCR_INIT_MASK;
++#else
++    ARG_UNUSED(dev);
++#endif /* !CONFIG_CAN_MANUAL_RECOVERY_MODE */
++}
+ 
+ /*
+  * CAST CAN doesn't support reporting CAN filter index, this function mannually look up the filter index
+@@ -274,9 +339,11 @@ __attribute__((section(".isr")))static void hpm_mcan_isr(const struct device *de
+     const struct hpm_mcan_config *cfg = dev->config;
+     MCAN_Type *can = cfg->base;
+     uint32_t flags = mcan_get_interrupt_flags(can);
++    hpm_mcan_dbg_isr++;
+     /* New message is available in RXFIFO0 */
+     if ((flags & MCAN_INT_RXFIFO0_NEW_MSG) != 0) {
+         hpm_mcan_get_message_from_rxfifo(dev, 0);
++        hpm_mcan_dbg_rx_pop++;
+     }
+     /* New message is available in RXFIFO1 */
+     if ((flags & MCAN_INT_RXFIFO1_NEW_MSG) != 0U) {
+@@ -294,10 +361,11 @@ __attribute__((section(".isr")))static void hpm_mcan_isr(const struct device *de
+             }
+         }
+     }
+-    /* Transmit completed */
++    /* Transmit completed：一次中断可能合并多帧完成，必须"完成几帧就处理几帧"
++     * （原来的固定 index 0 + 每次只处理一次会把回调/计数搞错位）。 */
+     if ((flags & MCAN_EVENT_TRANSMIT) != 0U) {
+-        has_sent_out = true;
+-        hpm_mcan_tc_event_handler(dev, 0);
++        hpm_mcan_dbg_tc_isr++;
++        hpm_mcan_tc_event_handler(dev);
+     }
+ 
+     /* Error happened */
+@@ -320,7 +388,12 @@ static int hpm_mcan_init(const struct device *dev)
+ 
+     k_mutex_init(&data->inst_mutex);
+     k_mutex_init(&data->tx_mutex);
+-    k_sem_init(&data->tx_sem, HPM_MCAN_NUM_TX_BUF_ELEMENTS, HPM_MCAN_NUM_TX_BUF_ELEMENTS);
++    /* 用 TX FIFO 的真实深度做节流：超过这个数 mcan_request_and_fill_txfifo() 会直接
++     * 报 status_mcan_txfifo_full，让上层看到 -EIO，而不是在这里就等超时。 */
++    k_sem_init(&data->tx_sem, HPM_MCAN_NUM_TX_FIFO_ELEMENTS, HPM_MCAN_NUM_TX_FIFO_ELEMENTS);
++    data->tx_cb_head = 0;
++    data->tx_cb_tail = 0;
++    data->txbto_seen = 0;
+ 
+     for (uint32_t i= 0; i < ARRAY_SIZE(data->tx_fin_sem); i++) {
+         k_sem_init(&data->tx_fin_sem[i], 1, 1);
+@@ -328,7 +401,9 @@ static int hpm_mcan_init(const struct device *dev)
+ 
+     data->filter_rtr = 0;
+     data->filter_rtr_mask = 0;
+-    has_sent_out = true;
++
++    /* 让第一次 bus-off 就能立刻恢复（不受限流窗口影响） */
++    data->bus_off_recover_ms = k_uptime_get() - HPM_MCAN_BUS_OFF_RECOVER_INTERVAL_MS;
+ 
+     /* Configure dt provided device signals when available */
+     ret = pinctrl_apply_state(cfg->pincfg, PINCTRL_STATE_DEFAULT);
+@@ -338,7 +413,19 @@ static int hpm_mcan_init(const struct device *dev)
+     }
+ 
+ #if defined(MCAN_SOC_MSG_BUF_IN_AHB_RAM) && (MCAN_SOC_MSG_BUF_IN_AHB_RAM == 1)
+-    status = mcan_set_msg_buf_attr(can, &s_can_info[0]);
++    uint32_t mcan_instance = mcan_get_instance_from_base(can);
++
++    if (mcan_instance >= HPM_MCAN_MSG_BUF_INSTANCE_COUNT) {
++        LOG_ERR("MCAN instance %u has no message RAM reserved", mcan_instance);
++        return -EINVAL;
++    }
++
++    mcan_msg_buf_attr_t msg_buf_attr = {
++        .ram_base = (uint32_t) &board_app_mcan_msg_buf[mcan_instance][0],
++        .ram_size = sizeof(board_app_mcan_msg_buf[0]),
++    };
++
++    status = mcan_set_msg_buf_attr(can, &msg_buf_attr);
+     if (status != status_success) {
+         LOG_ERR("MCAN set msg buf in AHB RAM failed");
+         return -EAGAIN;
+@@ -347,6 +434,29 @@ static int hpm_mcan_init(const struct device *dev)
+ 
+     mcan_get_default_config(can, config);
+ 
++    config->baudrate = cfg->common.bitrate;
++
++#if defined(CONFIG_CAN_FD_MODE)
++    /* 数据段位时序（FDF + BRS 帧的数据段）。
++     * 必须在这里填，因为 mcan_init() 只在 config->enable_canfd 为真时才会去写
++     * DBTP；而 SDK 默认的 baudrate_fd 是写死的常数，不会跟随设备树。
++     * 不填的后果：节点在 DT 里写 bitrate-data / sample-point(-data) 会被静默忽略，
++     * 控制器按 SDK 默认值跑，两个板子数据段位率可能对不上。 */
++    if (cfg->common.bitrate_data != 0U) {
++        config->baudrate_fd = cfg->common.bitrate_data;
++    }
++    if (cfg->common.sample_point_data != 0U) {
++        /* 只给一个窗口而不是精确值：SDK 的 mcan_calc_bit_timing_from_baudrate()
++         * 在窗口内找不到就整条 timing 失败，进而 device init 失败。
++         * ±CONFIG_CAN_SAMPLE_POINT_MARGIN 与 Zephyr 通用 can_calc_timing_data()
++         * 的口径一致（例：2Mbps@24MHz → 12tq/75%，正好命中）。 */
++        config->canfd_samplepoint_min =
++            (uint16_t)MAX((int32_t)cfg->common.sample_point_data - (int32_t)CONFIG_CAN_SAMPLE_POINT_MARGIN, 500);
++        config->canfd_samplepoint_max =
++            (uint16_t)MIN((int32_t)cfg->common.sample_point_data + (int32_t)CONFIG_CAN_SAMPLE_POINT_MARGIN, 1000);
++    }
++#endif /* CONFIG_CAN_FD_MODE */
++
+     clock_add_to_group(cfg->clock_name, 0);
+ 
+     clock_set_source_divider(cfg->clock_name, cfg->clock_src, cfg->clock_div);
+@@ -366,6 +476,9 @@ static int hpm_mcan_init(const struct device *dev)
+ 
+     uint32_t can_clk_freq = clock_get_frequency(cfg->clock_name);
+     status = mcan_init(can, config, can_clk_freq);
++    /* printk("CAN: clock=%lu baud=%lu NBTP=0x%08lx\n",
++           (unsigned long)can_clk_freq, (unsigned long)config->baudrate,
++           (unsigned long)can->NBTP); */
+     if (status != status_success) {
+         ret = -EAGAIN;
+     } else {
+@@ -478,10 +591,9 @@ static void convert_can_frame_to_mcan_frame(const struct can_frame *frame,
+ static int hpm_mcan_send(const struct device *dev,
+                         const struct can_frame *frame,
+                         k_timeout_t timeout,
+-                        can_tx_callback_t callback,
+-                        void *user_data)
++                       can_tx_callback_t callback,
++                       void *user_data)
+ {
+-    int ret;
+     const struct hpm_mcan_config *cfg = dev->config;
+     struct hpm_mcan_data *data = dev->data;
+     MCAN_Type *can = cfg->base;
+@@ -530,37 +642,61 @@ static int hpm_mcan_send(const struct device *dev,
+ 		return -ENETDOWN;
+ 	}
+ 
+-    while (!has_sent_out) {
+-
+-    }
+-
+-    has_sent_out = false;
+-
+     (void) hpm_mcan_get_state(dev, &state, NULL);
+     if (state == CAN_STATE_BUS_OFF) {
+         LOG_DBG("Transmit failed, bus-off");
++        /* 兜底：万一 bus-off 的状态变化中断没走到，借发送路径推一把恢复 */
++        hpm_mcan_try_bus_off_recover(dev);
+         return -ENETUNREACH;
+     }
+ 
+-    ret = k_sem_take(&data->tx_sem, timeout);
+-    if (ret != 0) {
+-        return -EAGAIN;
+-    }
+-
+     mcan_tx_frame_t tx_buf;
+     memset(&tx_buf, 0, sizeof(tx_buf));
+     convert_can_frame_to_mcan_frame(frame, &tx_buf);
+ 
+-    k_mutex_lock(&data->tx_mutex, timeout);
++    /* 不依赖"完成中断回补信用"：硬件 TX FIFO 只有 HPM_MCAN_NUM_TX_FIFO_ELEMENTS 个元素，
++     * 满了就按调用者给的超时等待重试。（实测本 IP 在 FIFO 模式下 TX Event FIFO 不产出事件、
++     * TXBTO 又只读，用"信用信号量"一旦还不回来就永久卡死 —— 那正是"TX 缓冲区一直满"的来源。） */
++    int64_t deadline_ms = INT64_MAX;
+ 
+-    data->tx_fin_cb[0] = callback;
+-    data->tx_fin_cb_arg[0] = user_data;
++    if (!K_TIMEOUT_EQ(timeout, K_FOREVER)) {
++        deadline_ms = k_uptime_get() + k_ticks_to_ms_ceil64(timeout.ticks);
++    }
+ 
+-    status = mcan_transmit_via_txbuf_nonblocking(can, 0, &tx_buf);
++    uint32_t fifo_index = 0;
++    for (;;) {
++        if (k_mutex_lock(&data->tx_mutex, K_NO_WAIT) == 0) {
++            /* 先按"入队顺序"记录回调，再往 FIFO 里放：TX 完成中断可能在本函数返回前就到，
++             * 这样回调表里已经是对应这一帧的内容了。 */
++            const uint32_t tail = data->tx_cb_tail;
++            data->tx_fin_cb[tail] = callback;
++            data->tx_fin_cb_arg[tail] = user_data;
++
++            status = mcan_transmit_via_txfifo_nonblocking(can, &tx_buf, &fifo_index);
++            if (status == status_success) {
++                data->tx_cb_tail = (tail + 1U) % HPM_MCAN_NUM_TX_BUF_ELEMENTS;
++                hpm_mcan_dbg_send_ok++;
++            } else {
++                /* 没排进去：回滚回调记录（tail 没动） */
++                data->tx_fin_cb[tail] = NULL;
++                data->tx_fin_cb_arg[tail] = NULL;
++                hpm_mcan_dbg_send_fail++;
++            }
++            k_mutex_unlock(&data->tx_mutex);
+ 
+-    k_mutex_unlock(&data->tx_mutex);
+-    if (status != 0) {
+-        return -EIO;
++            if (status == status_success) {
++                break;
++            }
++            if (status != status_mcan_txfifo_full) {
++                return -EIO;      /* 其它错误（参数/索引等）直接上报 */
++            }
++        }
++
++        if (k_uptime_get() >= deadline_ms) {
++            hpm_mcan_dbg_sem_timeout++;      /* TX FIFO 一直满 */
++            return -EAGAIN;
++        }
++        k_busy_wait(50);
+     }
+ 
+     if (callback == NULL) {
+@@ -784,37 +920,38 @@ static int hpm_mcan_get_state(const struct device *dev,
+                              struct can_bus_err_cnt *err_cnt)
+ {
+     int ret = 0;
+-    mcan_protocol_status_t protocol_status;
+     const struct hpm_mcan_config *cfg = dev->config;
+     MCAN_Type *can = cfg->base;
+     const struct hpm_mcan_data *data = dev->data;
+-    mcan_error_count_t error_count;
+-    memset(&error_count, 0, sizeof(mcan_error_count_t));
+ 
+     if (!data->started) {
+-        *state = CAN_STATE_STOPPED;
+-    } else {
+         if (state != NULL) {
+-            uint8_t flags = mcan_get_interrupt_flags(can);
+-            if ((flags & MCAN_EVENT_ERROR) != 0) {
+-                mcan_parse_protocol_status(can->PSR, &protocol_status);
+-                mcan_get_error_counter(can, &error_count);
+-                if (protocol_status.in_bus_off_state) {
+-                    *state = CAN_STATE_BUS_OFF;
+-                } else if (protocol_status.in_warning_state) {
+-                    *state = CAN_STATE_ERROR_WARNING;
+-                } else if (protocol_status.in_error_passive_state) {
+-                    *state = CAN_STATE_ERROR_PASSIVE;
+-                } else {
+-                    *state = CAN_STATE_ERROR_ACTIVE;
+-                }
+-            } else {
+-                *state = CAN_STATE_ERROR_ACTIVE;
+-            }
++            *state = CAN_STATE_STOPPED;
++        }
++        if (err_cnt != NULL) {
++            err_cnt->tx_err_cnt = 0;
++            err_cnt->rx_err_cnt = 0;
++        }
++        return 0;
++    }
++
++    if (state != NULL) {
++        mcan_protocol_status_t protocol_status;
++        mcan_parse_protocol_status(can->PSR, &protocol_status);
++        if (protocol_status.in_bus_off_state) {
++            *state = CAN_STATE_BUS_OFF;
++        } else if (protocol_status.in_warning_state) {
++            *state = CAN_STATE_ERROR_WARNING;
++        } else if (protocol_status.in_error_passive_state) {
++            *state = CAN_STATE_ERROR_PASSIVE;
++        } else {
++            *state = CAN_STATE_ERROR_ACTIVE;
+         }
+     }
+ 
+     if (err_cnt != NULL) {
++        mcan_error_count_t error_count;
++        mcan_get_error_counter(can, &error_count);
+         err_cnt->tx_err_cnt = error_count.transmit_error_count;
+         err_cnt->rx_err_cnt = error_count.receive_error_count;
+     }
+@@ -848,6 +985,11 @@ static void hpm_mcan_state_change_handler(const struct device *dev)
+ 
+     (void) hpm_mcan_get_state(dev, &state, &err_cnt);
+ 
++    /* bus-off 状态变化中断是自动恢复的主路径（本函数跑在 ISR 上下文） */
++    if (state == CAN_STATE_BUS_OFF) {
++        hpm_mcan_try_bus_off_recover(dev);
++    }
++
+     if (cb != NULL) {
+         cb(dev, state, err_cnt, cb_data);
+     }
+@@ -863,16 +1005,38 @@ static void hpm_mcan_set_state_change_callback(const struct device *dev,
+     data->state_change_cb_data = user_data;
+ }
+ 
+-static void hpm_mcan_tc_event_handler(const struct device *dev, uint32_t index)
++/* 处理"发送完成"。
++ * 一次 TC 中断可能合并多帧完成，用 TXBTO 的"新增置位"统计这次完成了几个元素：
++ *   本 IP 的 TXBTO 是只读寄存器（写不了 W1C），但元素被重新请求时硬件会清位，
++ *   所以维护一个"上次看到的置位集合"即可得到增量。
++ * 完成顺序 == 入队顺序（FIFO 模式），因此逐个从软件 FIFO 出队回调。 */
++static void hpm_mcan_tc_event_handler(const struct device *dev)
+ {
+     struct hpm_mcan_data *data = dev->data;
+-    can_tx_callback_t tx_cb;
+-    k_sem_give(&data->tx_sem);
+-    tx_cb = data->tx_fin_cb[index];
+-    if (tx_cb  == NULL) {
+-        k_sem_give(&data->tx_fin_sem[index]);
+-    } else {
+-        tx_cb(dev, 0, data->tx_fin_cb_arg[index]);
++    MCAN_Type *can = ((const struct hpm_mcan_config *)dev->config)->base;
++
++    const uint32_t now_bits = can->TXBTO;
++    uint32_t new_bits = now_bits & ~data->txbto_seen;
++
++    data->txbto_seen = now_bits;
++
++    while (new_bits != 0U) {
++        const uint32_t head = data->tx_cb_head;
++        can_tx_callback_t tx_cb = data->tx_fin_cb[head];
++        void *cb_arg = data->tx_fin_cb_arg[head];
++
++        data->tx_fin_cb[head] = NULL;
++        data->tx_fin_cb_arg[head] = NULL;
++        data->tx_cb_head = (head + 1U) % HPM_MCAN_NUM_TX_BUF_ELEMENTS;
++        hpm_mcan_dbg_tc_done++;
++
++        if (tx_cb == NULL) {
++            /* 阻塞式 can_send()（callback == NULL）等在这个信号量上 */
++            k_sem_give(&data->tx_fin_sem[0]);
++        } else {
++            tx_cb(dev, 0, cb_arg);
++        }
++        new_bits &= (new_bits - 1U);      /* 清掉最低置位 */
+     }
+ }
+ 
+@@ -1037,7 +1201,7 @@ static const struct can_driver_api hpm_mcan_driver_api = {
+         static void hpm_mcan_irq_config_func##n(const struct device *dev); \
+     \
+     static const struct hpm_mcan_config hpm_mcan_cfg_##n = { \
+-        .common = CAN_DT_DRIVER_CONFIG_INST_GET(inst, 0, 1000000), \
++        .common = CAN_DT_DRIVER_CONFIG_INST_GET(n, 0, 1000000), \
+         .base = (MCAN_Type*)DT_INST_REG_ADDR(n), \
+         .clock_name = (clock_name_t)DT_INST_PROP(n, clk_name), \
+         .clock_src = (clk_src_t)DT_INST_PROP(n, clk_source), \
+diff --git a/drivers/flash/flash_hpmicro.c b/drivers/flash/flash_hpmicro.c
+index a4ac1e7d7b9c00366b81b9e0ab625da5f6600735..1936d1ec7dc70daa9c6c2e71179e656b472925df 100644
+--- a/drivers/flash/flash_hpmicro.c
++++ b/drivers/flash/flash_hpmicro.c
+@@ -17,7 +17,6 @@
+ #include <stddef.h>
+ #include <string.h>
+ #include <errno.h>
+-#include "hpm_romapi.h"
+ #include <zephyr/kernel.h>
+ #include <zephyr/device.h>
+ #include <stddef.h>
+@@ -26,6 +25,13 @@
+ #include <zephyr/drivers/flash.h>
+ #include <zephyr/logging/log.h>
+ #include <zephyr/storage/flash_map.h>
++/*
++ * hpm_romapi.h 必须放在 Zephyr 头之后：它间接包含的 hpm_common.h 会定义
++ * ARRAY_SIZE（带 #ifndef 保护），而 Zephyr 的 sys/util.h 里的同名宏没有
++ * 保护，若先包含 hpm_romapi.h 会让 Zephyr 无条件重定义并触发
++ * -Wmacro-redefined 警告。
++ */
++#include "hpm_romapi.h"
+ LOG_MODULE_REGISTER(flash_hpmicro, CONFIG_FLASH_LOG_LEVEL);
+ 
+ #define HPM_STATUS_ZEPHYR_RET(x)    (x)
+@@ -123,27 +129,27 @@ static int flash_hpmicro_erase(const struct device *dev, off_t offset,
+ #if CONFIG_FLASH_PAGE_LAYOUT
+ static const struct flash_pages_layout flash_hpm_pages_layout[] = {
+     {
+-        .pages_count = FIXED_PARTITION_OFFSET(boot_partition) / KB(4),
++        .pages_count = PARTITION_OFFSET(boot_partition) / KB(4),
+         .pages_size = KB(4),
+     },
+     {
+-        .pages_count = FIXED_PARTITION_SIZE(boot_partition) / KB(4),
++        .pages_count = PARTITION_SIZE(boot_partition) / KB(4),
+         .pages_size = KB(4)
+     },
+     {
+-        .pages_count = FIXED_PARTITION_SIZE(slot0_partition) / KB(4),
++        .pages_count = PARTITION_SIZE(slot0_partition) / KB(4),
+         .pages_size = KB(4)
+     },
+     {
+-        .pages_count = FIXED_PARTITION_SIZE(slot1_partition) / KB(4),
++        .pages_count = PARTITION_SIZE(slot1_partition) / KB(4),
+         .pages_size = KB(4)
+     },
+     {
+-        .pages_count = FIXED_PARTITION_SIZE(scratch_partition) / KB(4),
++        .pages_count = PARTITION_SIZE(scratch_partition) / KB(4),
+         .pages_size = KB(4)
+     },
+     {
+-        .pages_count = FIXED_PARTITION_SIZE(storage_partition) / KB(4),
++        .pages_count = PARTITION_SIZE(storage_partition) / KB(4),
+         .pages_size = KB(4)
+     }
+ };
+@@ -215,4 +221,4 @@ DEVICE_DT_INST_DEFINE(0, flash_hpmicro_init,
+ 		      NULL,
+ 		      &flash_hpmicro_data, &flash_hpmicro_config,
+ 		      POST_KERNEL, CONFIG_FLASH_INIT_PRIORITY,
+-		      &flash_hpmicro_driver_api);
+\ No newline at end of file
++		      &flash_hpmicro_driver_api);
+diff --git a/drivers/pinctrl/pinctrl_hpmicro.c b/drivers/pinctrl/pinctrl_hpmicro.c
+index 6aa21a3f26a9e551774b91e2d1bcb31cde8eab9d..bc7a7d36de2ec9176d032d700a95b42cef2d25f5 100644
+--- a/drivers/pinctrl/pinctrl_hpmicro.c
++++ b/drivers/pinctrl/pinctrl_hpmicro.c
+@@ -47,7 +47,7 @@ static int hpmicro_pin_configure(IOC_Type *ioc_base, const uint32_t pin_mux, con
+ 	IOC_PAD_PAD_CTL_SMT_SET(pad_smt) |
+ #elif defined(CONFIG_SOC_SERIES_HPM5300) || defined(CONFIG_SOC_SERIES_HPM6300) ||\
+ 	defined(CONFIG_SOC_SERIES_HPM6800) || defined(CONFIG_SOC_SERIES_HPM6200) ||\
+-	defined(CONFIG_SOC_SERIES_HPM6E00)
++	defined(CONFIG_SOC_SERIES_HPM6E00) || defined(CONFIG_SOC_SERIES_HPM5E00)
+ 	IOC_PAD_PAD_CTL_HYS_SET(pad_smt) |
+ 	IOC_PAD_PAD_CTL_SPD_SET(HPMICRO_PAD_CTL_SPD(pin_cfg)) |
+ 	IOC_PAD_PAD_CTL_PRS_SET(HPMICRO_PAD_CTL_PRS(pin_cfg)) |
+diff --git a/drivers/serial/Kconfig.hpmicro b/drivers/serial/Kconfig.hpmicro
+index df2a55743d464612ef91d6ea65bdafc00a272e30..31a3291ed6147630f1228bdc304943db5b7f3c47 100644
+--- a/drivers/serial/Kconfig.hpmicro
++++ b/drivers/serial/Kconfig.hpmicro
+@@ -10,9 +10,10 @@ config UART_HPMICRO
+ 	select SERIAL_HAS_DRIVER
+ 	select SERIAL_SUPPORT_INTERRUPT
+ 	select SERIAL_SUPPORT_ASYNC
+-	select HAS_HPMSDK_GPTMR if SERIAL_SUPPORT_ASYNC
+-	select HAS_HPMSDK_DMA if (SERIAL_SUPPORT_ASYNC && DMA_HPMICRO)
+-	select HAS_HPMSDK_DMAV2 if (SERIAL_SUPPORT_ASYNC && DMAV2_HPMICRO)	
+-	select DMA if SERIAL_SUPPORT_ASYNC
++	select UART_INTERRUPT_DRIVEN if UART_ASYNC_API
++	select HAS_HPMSDK_GPTMR if UART_ASYNC_API
++	select HAS_HPMSDK_DMA if (UART_ASYNC_API && DMA_HPMICRO)
++	select HAS_HPMSDK_DMAV2 if (UART_ASYNC_API && DMAV2_HPMICRO)
++	select DMA if UART_ASYNC_API
+ 	help
+-	  This option enables the UART driver for HPM SoC family.
+\ No newline at end of file
++	  This option enables the UART driver for HPM SoC family.
+diff --git a/drivers/serial/uart_hpmicro.c b/drivers/serial/uart_hpmicro.c
+index f1f5081baa1dcfaad77b1b7147e471385cf2fda4..a71757207e918c1a79fd4201021748d9fbaa4bbd 100644
+--- a/drivers/serial/uart_hpmicro.c
++++ b/drivers/serial/uart_hpmicro.c
+@@ -8,12 +8,25 @@
+ #define DT_DRV_COMPAT hpmicro_hpm_uart
+ 
+ #include <errno.h>
++#include <zephyr/kernel.h>
+ #include <zephyr/drivers/pinctrl.h>
+ #include <zephyr/drivers/uart.h>
+ #include <soc.h>
++#include <hpm_interrupt.h>
+ #include <hpm_common.h>
+ #include <hpm_uart_drv.h>
+ #include <hpm_clock_drv.h>
++
++#if defined(CONFIG_UART_ASYNC_API) && defined(HPM_IP_FEATURE_UART_RX_IDLE_DETECT) && \
++	(HPM_IP_FEATURE_UART_RX_IDLE_DETECT == 1)
++#define UART_HPM_USE_HW_RX_IDLE 1
++#else
++#define UART_HPM_USE_HW_RX_IDLE 0
++#endif
++
++/* NOTE(ai-authored): prefer UART hardware RX idle when the HPM UART IP supports it,
++ * and fall back to the older TRGM/GPTMR software idle path otherwise.
++ */
+ #ifdef CONFIG_UART_ASYNC_API
+ #include <hpm_trgmmux_src.h>
+ #include <hpm_trgm_drv.h>
+@@ -83,7 +96,14 @@ struct uart_hpm_cfg {
+ 	bool loopback_en;
+ #ifdef CONFIG_UART_INTERRUPT_DRIVEN
+ 	uart_irq_config_func_t irq_config_func;
++	/* HPM mod: add IRQ num/priority to support multi-instance interrupt registration */
++	uint32_t irq_num;
++	uint32_t irq_priority;
+ #endif /* CONFIG_UART_INTERRUPT_DRIVEN */
++#ifdef CONFIG_UART_ASYNC_API
++	/* HPM mod: add idle timer interrupt config */
++	uart_irq_config_func_t idle_irq_config_func;
++#endif
+ 	const struct pinctrl_dev_config *pincfg;
+ };
+ 
+@@ -105,18 +125,89 @@ struct uart_hpm_data {
+     gptmr_info_t gptmr_info;
+ 	uint32_t idle_time_out_us;
+ 	volatile uint32_t status_flags;
++	bool rx_idle_timer_enabled;
++	struct k_work_delayable rx_timeout_work;
++	bool rx_timeout_work_enabled;
++	bool rx_idle_work_busy;
++	bool rx_idle_irq_pending;
++	bool rx_idle_data_seen;
++	uint32_t rx_idle_poll_us;
++	size_t rx_last_pending_length;
+ 	struct stream dma_rx;
+ 	struct stream dma_tx;
+ #endif
+ };
+ 
+ #ifdef CONFIG_UART_ASYNC_API
++static int uart_hpm_dma_replace_rx_buffer(const struct device *dev);
++static void uart_hpm_rx_timeout_work_handler(struct k_work *work);
++#if UART_HPM_USE_HW_RX_IDLE
++static void uart_hpm_hw_rx_idle_handler(const struct device *dev);
++static void config_gptmr_to_poll_uart_rx_idle(gptmr_info_t *gptmr_info, uint32_t poll_us);
++static void stop_gptmr_uart_rx_idle_poll(gptmr_info_t *gptmr_info);
++
++#if defined(HPM_IP_FEATURE_UART_E00018_FIX) && (HPM_IP_FEATURE_UART_E00018_FIX == 1)
++#define UART_HPM_RX_IDLE_FLAG_REG(base) ((base)->IIR2)
++#else
++#define UART_HPM_RX_IDLE_FLAG_REG(base) ((base)->IIR)
++#endif
++
++#define UART_HPM_HW_IDLE_THRESHOLD_BITS 3U
++
++#endif
++
++#if UART_HPM_USE_HW_RX_IDLE
++static void config_gptmr_to_poll_uart_rx_idle(gptmr_info_t *gptmr_info, uint32_t poll_us)
++{
++	uint32_t gptmr_freq;
++	uint32_t ticks;
++	gptmr_channel_config_t config;
++
++	if ((gptmr_info->ptr == NULL) || (poll_us == 0U)) {
++		return;
++	}
++
++	gptmr_freq = clock_get_frequency(gptmr_info->clock_name);
++	ticks = (gptmr_freq / 1000000U) * poll_us;
++	if (ticks == 0U) {
++		ticks = 1U;
++	}
++
++	gptmr_channel_get_default_config(gptmr_info->ptr, &config);
++	config.reload = ticks;
++	config.enable_cmp_output = false;
++
++	gptmr_disable_irq(gptmr_info->ptr, GPTMR_CH_RLD_IRQ_MASK(gptmr_info->cmp_ch));
++	gptmr_stop_counter(gptmr_info->ptr, gptmr_info->cmp_ch);
++	gptmr_clear_status(gptmr_info->ptr, GPTMR_CH_RLD_STAT_MASK(gptmr_info->cmp_ch));
++	gptmr_channel_reset_count(gptmr_info->ptr, gptmr_info->cmp_ch);
++	gptmr_channel_config(gptmr_info->ptr, gptmr_info->cmp_ch, &config, false);
++	gptmr_enable_irq(gptmr_info->ptr, GPTMR_CH_RLD_IRQ_MASK(gptmr_info->cmp_ch));
++	intc_m_enable_irq_with_priority(gptmr_info->irq_index, 1);
++	gptmr_start_counter(gptmr_info->ptr, gptmr_info->cmp_ch);
++}
++
++static void stop_gptmr_uart_rx_idle_poll(gptmr_info_t *gptmr_info)
++{
++	if (gptmr_info->ptr == NULL) {
++		return;
++	}
++
++	gptmr_disable_irq(gptmr_info->ptr, GPTMR_CH_RLD_IRQ_MASK(gptmr_info->cmp_ch));
++	gptmr_stop_counter(gptmr_info->ptr, gptmr_info->cmp_ch);
++	gptmr_clear_status(gptmr_info->ptr, GPTMR_CH_RLD_STAT_MASK(gptmr_info->cmp_ch));
++	gptmr_channel_reset_count(gptmr_info->ptr, gptmr_info->cmp_ch);
++}
++#endif
++
++#if !UART_HPM_USE_HW_RX_IDLE
+ static void config_gptmr_to_detect_uart_rx_idle(gptmr_info_t *gptmr_info, trgm_info_t *trgm_info, uint32_t time_out)
+ {
+     uint32_t gptmr_freq, bits;
+     gptmr_channel_config_t config;
+ 
+     bits = 12+6; /* use max value: 1 start bit, 8 data bits, 2 stop bits, 1 parity bit */
++    clock_add_to_group(gptmr_info->clock_name, 0);
+     gptmr_freq = clock_get_frequency(gptmr_info->clock_name);
+     gptmr_channel_get_default_config(gptmr_info->ptr, &config);
+     config.cmp[0] = (gptmr_freq / 1000000) * time_out; /* Time to transmit a byte */
+@@ -135,6 +226,7 @@ static void config_gptmr_to_detect_uart_rx_idle(gptmr_info_t *gptmr_info, trgm_i
+ static void config_gptmr_to_detect_uart_rx_start(gptmr_info_t *gptmr_info, trgm_info_t *trgm_info)
+ {
+     gptmr_channel_config_t config;
++    clock_add_to_group(gptmr_info->clock_name, 0);
+     gptmr_channel_get_default_config(gptmr_info->ptr, &config);
+     config.mode = gptmr_work_mode_capture_at_falling_edge;
+ 
+@@ -146,6 +238,7 @@ static void config_gptmr_to_detect_uart_rx_start(gptmr_info_t *gptmr_info, trgm_
+     gptmr_enable_irq(gptmr_info->ptr, GPTMR_CH_CAP_IRQ_MASK(gptmr_info->cap_ch)); /* enable capture irq */
+     gptmr_start_counter(gptmr_info->ptr, gptmr_info->cap_ch);
+ }
++#endif
+ 
+ static int uart_hpm_dma_tx_load(const struct device *dev, const uint8_t *buf, size_t len)
+ {
+@@ -154,7 +247,6 @@ static int uart_hpm_dma_tx_load(const struct device *dev, const uint8_t *buf, si
+ 	struct dma_block_config *blk_cfg;
+ 	UART_Type *base = cfg->base;
+ 
+-	assert(buf != NULL);
+ 
+ 	/* remember active TX DMA channel (used in callback) */
+ 	struct stream *stream = &data->dma_tx;
+@@ -190,7 +282,6 @@ static int uart_hpm_dma_rx_load(const struct device *dev, uint8_t *buf, size_t l
+ 	struct dma_block_config *blk_cfg;
+ 	UART_Type *base = cfg->base;
+ 
+-	assert(buf != NULL);
+ 
+ 	/* retrieve active RX DMA channel (used in callback) */
+ 	struct stream *stream = &data->dma_rx;
+@@ -260,6 +351,13 @@ static int uart_hpm_configure_init(const struct device *dev, const struct uart_c
+     uart_config.dma_enable = true;
+ 	uart_config.tx_fifo_level = uart_tx_fifo_trg_not_full;
+ 	uart_config.rx_fifo_level = uart_rx_fifo_trg_not_empty; /* this config should not change */
++#if UART_HPM_USE_HW_RX_IDLE
++		/* HPM mod: enable hardware RX idle detection (instead of old TRGM/GPTMR path) */
++	uart_config.rxidle_config.detect_enable = true;
++	uart_config.rxidle_config.detect_irq_enable = true;
++	uart_config.rxidle_config.idle_cond = uart_rxline_idle_cond_rxline_logic_one;
++	uart_config.rxidle_config.threshold = 20U;
++#endif
+ #endif
+ 	switch (cfg->parity) {
+ 	case UART_CFG_PARITY_NONE:
+@@ -310,6 +408,7 @@ static int uart_hpm_configure_init(const struct device *dev, const struct uart_c
+ 	case UART_CFG_FLOW_CTRL_RTS_CTS:
+ 		uart_config.modem_config.auto_flow_ctrl_en = true;
+ 		break;
++	/* HPM mod: fix parity not being applied - orig SDK parses but never assigns */
+ 	default:
+ 		return -ENOTSUP;
+ 	}
+@@ -343,6 +442,19 @@ static int uart_hpm_init(const struct device *dev)
+ #ifdef CONFIG_UART_INTERRUPT_DRIVEN
+ 	cfg->irq_config_func(dev);
+ #endif /* CONFIG_UART_INTERRUPT_DRIVEN */
++#ifdef CONFIG_UART_ASYNC_API
++#ifndef CONFIG_UART_INTERRUPT_DRIVEN
++	if (cfg->idle_irq_config_func != NULL) {
++		cfg->idle_irq_config_func(dev);
++	}
++#endif
++	/* HPM mod: async RX timeout workqueue - handle incomplete DMA frames */
++	k_work_init_delayable(&data->rx_timeout_work, uart_hpm_rx_timeout_work_handler);
++	data->rx_timeout_work_enabled = false;
++	data->rx_last_pending_length = 0U;
++	data->rx_idle_irq_pending = false;
++	data->rx_idle_data_seen = false;
++#endif
+ 
+ 	return 0;
+ }
+@@ -501,6 +613,28 @@ void uart_hpm_irq_callback_set(const struct device *dev,
+ __attribute__((section(".isr"))) static void uart_hpm_isr(const struct device *dev)
+ {
+ 	struct uart_hpm_data * const dev_data = dev->data;
++#if defined(CONFIG_UART_ASYNC_API) && UART_HPM_USE_HW_RX_IDLE
++	const struct uart_hpm_cfg *cfg = dev->config;
++	UART_Type *base = cfg->base;
++	struct dma_status stat;
++	size_t pending = dev_data->dma_rxinfo.current_total_size;
++
++	if (uart_is_rxline_idle(base)) {
++		if (dma_get_status(dev_data->dma_rx.dma_dev, dev_data->dma_rx.channel, &stat) == 0) {
++			pending = stat.pending_length;
++			if (pending < dev_data->dma_rxinfo.current_total_size) {
++				dev_data->rx_idle_data_seen = true;
++			}
++		}
++
++		uart_clear_rxline_idle_flag(base);
++		if (dev_data->rx_idle_data_seen && !dev_data->rx_idle_work_busy) {
++			dev_data->rx_idle_work_busy = true;
++			uart_hpm_hw_rx_idle_handler(dev);
++			dev_data->rx_idle_work_busy = false;
++		}
++	}
++#endif
+ 
+ 	if (dev_data->user_cb) {
+ 		dev_data->user_cb(dev, dev_data->user_data);
+@@ -510,14 +644,6 @@ __attribute__((section(".isr"))) static void uart_hpm_isr(const struct device *d
+ #endif /* CONFIG_UART_INTERRUPT_DRIVEN */
+ 
+ #ifdef CONFIG_UART_ASYNC_API
+-static inline void async_timer_start(struct k_work_delayable *work, size_t timeout_us)
+-{
+-	if ((timeout_us != SYS_FOREVER_US) && (timeout_us != 0)) {
+-		LOG_DBG("async timer started for %d us", timeout_us);
+-		k_work_reschedule(work, K_USEC(timeout_us));
+-	}
+-}
+-
+ static void async_user_callback(const struct device *dev, struct uart_event *evt)
+ {
+ 	const struct uart_hpm_data *data = dev->data;
+@@ -589,16 +715,29 @@ static void uart_hpm_async_rx_flush(const struct device *dev)
+ {
+ 	struct uart_hpm_data *data = dev->data;
+ 	size_t rx_rcv_len;
++	size_t rx_remaining;
+ 	struct dma_status stat;
+ 	int ret;
+ 
+ 	ret = dma_get_status(data->dma_rx.dma_dev, data->dma_rx.channel, &stat);
+ 	if (ret) {
+ 		LOG_ERR("ERR dma get status.\r\n");
++		data->dma_rxinfo.current_size = 0;
++		return;
+ 	}
+-	rx_rcv_len = data->dma_rxinfo.current_total_size - 
+-				 data->dma_rxinfo.current_offset - 
+-				 stat.pending_length;
++
++	if (data->dma_rxinfo.current_offset > data->dma_rxinfo.current_total_size) {
++		data->dma_rxinfo.current_size = 0;
++		return;
++	}
++
++	rx_remaining = data->dma_rxinfo.current_total_size - data->dma_rxinfo.current_offset;
++	if (stat.pending_length > rx_remaining) {
++		data->dma_rxinfo.current_size = 0;
++		return;
++	}
++
++	rx_rcv_len = rx_remaining - stat.pending_length;
+ 	if (rx_rcv_len > 0) {
+ 		data->dma_rxinfo.current_size = rx_rcv_len;
+ 		async_evt_rx_rdy(dev);
+@@ -606,7 +745,117 @@ static void uart_hpm_async_rx_flush(const struct device *dev)
+ 		data->dma_rxinfo.current_size = 0;
+ 	}
+ }
++#if UART_HPM_USE_HW_RX_IDLE
++static void uart_hpm_hw_rx_idle_handler(const struct device *dev)
++{
++	struct uart_hpm_data *data = dev->data;
++	const struct uart_hpm_cfg *config = dev->config;
++	UART_Type *uart_base = config->base;
++
++	if (data->dma_rxinfo.current_mode == 0U) {
++		return;
++	}
++
++	uart_disable_rxline_idle_detection(uart_base);
++
++	if (dma_suspend(data->dma_rx.dma_dev, data->dma_rx.channel) != 0) {
++		uart_enable_rxline_idle_detection(uart_base);
++		return;
++	}
++
++	uart_clear_rxline_idle_flag(uart_base);
++	(void)uart_flush(uart_base);
++	uart_hpm_async_rx_flush(dev);
++
++	if ((data->dma_rxinfo.current_size > 0U) &&
++	    (data->dma_rxinfo.next_dst_addr != NULL)) {
++		async_evt_rx_buf_release(dev);
++		if (uart_hpm_dma_replace_rx_buffer(dev) == 0) {
++			return;
++		}
++	}
++
++	(void)dma_resume(data->dma_rx.dma_dev, data->dma_rx.channel);
++	uart_enable_rxline_idle_detection(uart_base);
++}
++#endif
++
++static void uart_hpm_rx_timeout_work_handler(struct k_work *work)
++{
++	struct k_work_delayable *dwork = k_work_delayable_from_work(work);
++	struct uart_hpm_data *data = CONTAINER_OF(dwork, struct uart_hpm_data, rx_timeout_work);
++	const struct device *dev = data->dma_rxinfo.dev;
++#if UART_HPM_USE_HW_RX_IDLE
++	if (!data->rx_timeout_work_enabled || data->rx_idle_work_busy ||
++	    (dev == NULL) || (data->dma_rxinfo.current_mode == 0U)) {
++		return;
++	}
++
++	if (!data->rx_idle_irq_pending) {
++		return;
++	}
++
++	data->rx_idle_irq_pending = false;
++	data->rx_idle_work_busy = true;
++	uart_hpm_hw_rx_idle_handler(dev);
++	if (data->rx_idle_timer_enabled) {
++		config_gptmr_to_poll_uart_rx_idle(&data->gptmr_info, data->rx_idle_poll_us);
++	}
++	data->rx_idle_work_busy = false;
++#else
++	const struct uart_hpm_cfg *config;
++	UART_Type *uart_base;
++	struct dma_status stat;
++	size_t pending;
++	size_t rx_remaining;
++	int ret;
++
++	if (!data->rx_timeout_work_enabled || data->rx_idle_work_busy ||
++	    (dev == NULL) || (data->dma_rxinfo.current_mode == 0U)) {
++		return;
++	}
++
++	config = dev->config;
++	uart_base = config->base;
++
++	ret = dma_get_status(data->dma_rx.dma_dev, data->dma_rx.channel, &stat);
++	if (ret != 0) {
++		goto reschedule;
++	}
++
++	pending = stat.pending_length;
++	if (pending != data->rx_last_pending_length) {
++		data->rx_last_pending_length = pending;
++		goto reschedule;
++	}
++
++	if (data->dma_rxinfo.current_offset > data->dma_rxinfo.current_total_size) {
++		goto reschedule;
++	}
++
++	rx_remaining = data->dma_rxinfo.current_total_size - data->dma_rxinfo.current_offset;
++	if (pending >= rx_remaining) {
++		goto reschedule;
++	}
++
++	if (dma_suspend(data->dma_rx.dma_dev, data->dma_rx.channel) == 0) {
++		uart_hpm_async_rx_flush(dev);
++		if ((data->dma_rxinfo.current_size > 0U) && (data->dma_rxinfo.next_dst_addr != NULL)) {
++			async_evt_rx_buf_release(dev);
++			if (uart_hpm_dma_replace_rx_buffer(dev) == 0) {
++				return;
++			}
++		} else {
++			(void)dma_resume(data->dma_rx.dma_dev, data->dma_rx.channel);
++		}
++	}
+ 
++reschedule:
++	if (data->rx_timeout_work_enabled && (data->rx_idle_poll_us > 0U)) {
++		k_work_reschedule(&data->rx_timeout_work, K_USEC(data->rx_idle_poll_us));
++	}
++#endif
++}
+ static uint32_t uart_hpm_async_tx_flush(const struct device *dev)
+ {
+ 	struct uart_hpm_data *data = dev->data;
+@@ -614,7 +863,7 @@ static uint32_t uart_hpm_async_tx_flush(const struct device *dev)
+ 	struct dma_status stat;
+ 	int ret;
+ 
+-	ret = dma_get_status(dev, data->dma_tx.channel, &stat);
++	ret = dma_get_status(data->dma_tx.dma_dev, data->dma_tx.channel, &stat);
+ 	if (ret) {
+ 		LOG_ERR("ERR dma get status.\r\n");
+ 	}
+@@ -631,17 +880,31 @@ static int uart_hpm_rx_disable(const struct device *dev)
+ {
+ 	struct uart_hpm_data *data = dev->data;
+ 	const unsigned int key = irq_lock();
++#if UART_HPM_USE_HW_RX_IDLE
++	const struct uart_hpm_cfg *config = dev->config;
++	UART_Type *uart_base = config->base;
++
++	uart_disable_rxline_idle_detection(uart_base);
++	uart_disable_irq(uart_base, uart_intr_rx_data_avail_or_timeout);
++	uart_disable_irq(uart_base, uart_intr_rx_line_idle);
++	uart_clear_rxline_idle_flag(uart_base);
++	if (data->rx_idle_timer_enabled) {
++		stop_gptmr_uart_rx_idle_poll(&data->gptmr_info);
++	}
++#else
++	if (data->rx_idle_timer_enabled) {
++		gptmr_clear_status(data->gptmr_info.ptr, GPTMR_CH_CMP_STAT_MASK(data->gptmr_info.cmp_ch, 0)); /* clear cmp status */
++		gptmr_stop_counter(data->gptmr_info.ptr, data->gptmr_info.cmp_ch); /* stop counter */
++		gptmr_channel_reset_count(data->gptmr_info.ptr, data->gptmr_info.cmp_ch); /* clear counter */
++		gptmr_disable_irq(data->gptmr_info.ptr, GPTMR_CH_CMP_IRQ_MASK(data->gptmr_info.cmp_ch, 0)); /* disable cmp irq */
++	}
++#endif
+ 
+-	gptmr_clear_status(data->gptmr_info.ptr, GPTMR_CH_CMP_STAT_MASK(data->gptmr_info.cmp_ch, 0)); /* clear cmp status */
+-	gptmr_stop_counter(data->gptmr_info.ptr, data->gptmr_info.cmp_ch); /* stop counter */
+-	gptmr_channel_reset_count(data->gptmr_info.ptr, data->gptmr_info.cmp_ch); /* clear counter */
+-	gptmr_disable_irq(data->gptmr_info.ptr, GPTMR_CH_CMP_IRQ_MASK(data->gptmr_info.cmp_ch, 0)); /* disable cmp irq */
+-	
+ 	dma_suspend(data->dma_rx.dma_dev, data->dma_rx.channel);
+ 	uart_hpm_async_rx_flush(dev);
+ 	async_evt_rx_buf_release(dev);
+ 
+-		/* disable dma channel */
++	/* disable dma channel */
+ 	dma_stop(data->dma_rx.dma_dev, data->dma_rx.channel);
+ 
+ 	data->dma_rxinfo.next_dst_addr = NULL;
+@@ -658,9 +921,14 @@ static int uart_hpm_rx_disable(const struct device *dev)
+ 
+ 	async_user_callback(dev, &disabled_event);
+ 	irq_unlock(key);
++	data->rx_timeout_work_enabled = false;
++	k_work_cancel_delayable(&data->rx_timeout_work);
++	data->rx_idle_irq_pending = false;
++	data->rx_idle_data_seen = false;
+ 	return 0;
+ }
+ 
++#if !UART_HPM_USE_HW_RX_IDLE
+ /* this handler used to detect uart idle status */
+ /* when gptmr cap irq occurs, think as uart rx start, enable gptmr cmp irq for rx idle */
+ /* when gptmr cmp irq occurs, think as uart rx idle status, close gptmr cmp irq, close uart dma */
+@@ -669,9 +937,13 @@ void gptmr_detect_uart_rx_idle_handler(const struct device *dev)
+ 	struct uart_hpm_data * const data = dev->data;
+     gptmr_info_t gptmr_info = data->gptmr_info;
+ 
++	if (!data->rx_idle_timer_enabled) {
++		return;
++	}
++
+     /* cmp */
+     if (gptmr_check_status(gptmr_info.ptr, GPTMR_CH_CMP_STAT_MASK(gptmr_info.cmp_ch, 0))) {
+-        gptmr_clear_status(gptmr_info.ptr, GPTMR_CH_CMP_STAT_MASK(gptmr_info.cmp_ch, 0)); /* clear cmp status */
++        gptmr_clear_status(gptmr_info.ptr, GPTMR_CH_CMP_STAT_MASK(gptmr_info.cmp_ch, 0) | GPTMR_CH_CAP_STAT_MASK(gptmr_info.cap_ch)); /* clear cmp and capture status */
+         gptmr_stop_counter(gptmr_info.ptr, gptmr_info.cmp_ch); /* stop counter */
+         gptmr_channel_reset_count(gptmr_info.ptr, gptmr_info.cmp_ch); /* clear counter */
+         gptmr_disable_irq(gptmr_info.ptr, GPTMR_CH_CMP_IRQ_MASK(gptmr_info.cmp_ch, 0)); /* disable cmp irq */
+@@ -708,18 +980,83 @@ static void uart_hpm_timer_isr(const struct device *dev)
+ {
+ 	gptmr_detect_uart_rx_idle_handler(dev);
+ }
++#else
++#if DT_ANY_INST_HAS_PROP_STATUS_OKAY(uart_idle_gptmr_reg)
++static void uart_hpm_timer_isr(const struct device *dev)
++{
++	struct uart_hpm_data *data = dev->data;
++	const struct uart_hpm_cfg *config = dev->config;
++	gptmr_info_t gptmr_info = data->gptmr_info;
++	struct dma_status stat;
++	bool rx_idle;
++	size_t pending = data->dma_rxinfo.current_total_size;
++
++	if (gptmr_check_status(gptmr_info.ptr, GPTMR_CH_RLD_STAT_MASK(gptmr_info.cmp_ch))) {
++		gptmr_clear_status(gptmr_info.ptr, GPTMR_CH_RLD_STAT_MASK(gptmr_info.cmp_ch));
++	}
++
++	if (!data->rx_idle_timer_enabled || (data->dma_rxinfo.current_mode == 0U)) {
++		return;
++	}
++
++	if (dma_get_status(data->dma_rx.dma_dev, data->dma_rx.channel, &stat) == 0) {
++		pending = stat.pending_length;
++		if (!data->rx_idle_data_seen && (pending < data->dma_rxinfo.current_total_size)) {
++			data->rx_idle_data_seen = true;
++		}
++	}
++	rx_idle = uart_is_rxline_idle(config->base);
++
++	if (!data->rx_idle_data_seen) {
++		if (rx_idle) {
++			uart_clear_rxline_idle_flag(config->base);
++		}
++		return;
++	}
++
++	if (rx_idle) 
++	{
++		if (!data->rx_idle_work_busy) {
++			data->rx_idle_work_busy = true;
++			gptmr_disable_irq(gptmr_info.ptr, GPTMR_CH_RLD_IRQ_MASK(gptmr_info.cmp_ch));
++			gptmr_stop_counter(gptmr_info.ptr, gptmr_info.cmp_ch);
++			gptmr_clear_status(gptmr_info.ptr, GPTMR_CH_RLD_STAT_MASK(gptmr_info.cmp_ch));
++			uart_hpm_hw_rx_idle_handler(dev);
++			if (data->rx_idle_timer_enabled) {
++				config_gptmr_to_poll_uart_rx_idle(&data->gptmr_info, data->rx_idle_poll_us);
++			}
++			data->rx_idle_work_busy = false;
++		}
++	}
++}
++#endif
++#endif
+ 
+ static int uart_hpm_dma_replace_rx_buffer(const struct device *dev)
+ {
+-	struct uart_hpm_data * data = dev->data;
++	struct uart_hpm_data *data = dev->data;
++#if !UART_HPM_USE_HW_RX_IDLE
+     gptmr_info_t gptmr_info = data->gptmr_info;
++#else
++	const struct uart_hpm_cfg *config = dev->config;
++	UART_Type *uart_base = config->base;
++#endif
+ 	unsigned int key = irq_lock();
+ 
+ 	if (data->dma_rxinfo.next_dst_addr != NULL) {
+-		gptmr_clear_status(gptmr_info.ptr, GPTMR_CH_CMP_STAT_MASK(gptmr_info.cmp_ch, 0)); /* clear cmp status */
+-		gptmr_stop_counter(gptmr_info.ptr, gptmr_info.cmp_ch); /* stop counter */
+-		gptmr_channel_reset_count(gptmr_info.ptr, gptmr_info.cmp_ch); /* clear counter */
+-		gptmr_disable_irq(gptmr_info.ptr, GPTMR_CH_CMP_IRQ_MASK(gptmr_info.cmp_ch, 0)); /* disable cmp irq */
++#if !UART_HPM_USE_HW_RX_IDLE
++		if (data->rx_idle_timer_enabled) {
++			gptmr_clear_status(gptmr_info.ptr, GPTMR_CH_CMP_STAT_MASK(gptmr_info.cmp_ch, 0) | GPTMR_CH_CAP_STAT_MASK(gptmr_info.cap_ch)); /* clear cmp and capture status */
++			gptmr_stop_counter(gptmr_info.ptr, gptmr_info.cmp_ch); /* stop counter */
++			gptmr_channel_reset_count(gptmr_info.ptr, gptmr_info.cmp_ch); /* clear counter */
++			gptmr_disable_irq(gptmr_info.ptr, GPTMR_CH_CMP_IRQ_MASK(gptmr_info.cmp_ch, 0)); /* disable cmp irq */
++		}
++	#else
++		uart_disable_rxline_idle_detection(uart_base);
++		uart_disable_irq(uart_base, uart_intr_rx_data_avail_or_timeout);
++		uart_disable_irq(uart_base, uart_intr_rx_line_idle);
++		uart_clear_rxline_idle_flag(uart_base);
++	#endif
+ 		dma_stop(data->dma_rx.dma_dev, data->dma_rx.channel);
+ 		data->dma_rxinfo.current_buf = data->dma_rxinfo.next_dst_addr;
+ 		data->dma_rxinfo.current_total_size = data->dma_rxinfo.next_buff_size;
+@@ -728,9 +1065,23 @@ static int uart_hpm_dma_replace_rx_buffer(const struct device *dev)
+ 		data->dma_rxinfo.next_buff_size = 0;
+ 		data->dma_rxinfo.current_mode = 0;
+ 		data->dma_rxinfo.current_offset = 0;
++		data->rx_last_pending_length = data->dma_rxinfo.current_total_size;
++		data->rx_idle_data_seen = false;
+ 		async_evt_rx_buf_request(dev);
+-		gptmr_enable_irq(gptmr_info.ptr, GPTMR_CH_CAP_IRQ_MASK(gptmr_info.cap_ch));
+-		gptmr_start_counter(gptmr_info.ptr, gptmr_info.cap_ch);
++#if !UART_HPM_USE_HW_RX_IDLE
++		if (data->rx_idle_timer_enabled) {
++			gptmr_enable_irq(gptmr_info.ptr, GPTMR_CH_CAP_IRQ_MASK(gptmr_info.cap_ch));
++			gptmr_start_counter(gptmr_info.ptr, gptmr_info.cap_ch);
++		}
++	#else
++		uart_hpm_dma_rx_load(dev, data->dma_rxinfo.current_buf,
++				     data->dma_rxinfo.current_total_size);
++		dma_start(data->dma_rx.dma_dev, data->dma_rx.channel);
++		data->dma_rxinfo.current_mode = 1;
++		/* 同上：DMA 模式不打开 FIFO 非空中断（按字节触发的中断风暴源） */
++		uart_enable_irq(uart_base, uart_intr_rx_line_idle);
++		uart_enable_rxline_idle_detection(uart_base);
++	#endif
+ 		irq_unlock(key);
+ 		return 0;
+ 	} else {
+@@ -777,7 +1128,7 @@ static int uart_hpm_tx_abort(const struct device *dev)
+ 	struct uart_hpm_data *data = dev->data;
+ 	uint32_t len;
+ 
+-	stat = dma_suspend(dev, data->dma_tx.channel);
++	stat = dma_suspend(data->dma_tx.dma_dev, data->dma_tx.channel);
+ 	if (stat) {
+ 		LOG_ERR("ERR dma suspend error.\r\n");
+ 		return stat;
+@@ -788,7 +1139,7 @@ static int uart_hpm_tx_abort(const struct device *dev)
+ 			.data.tx.buf = data->dma_txinfo.dst_addr,
+ 			.data.tx.len = len
+ 	};
+-	stat = dma_stop(dev, data->dma_tx.channel);
++	stat = dma_stop(data->dma_tx.dma_dev, data->dma_tx.channel);
+ 	if (stat) {
+ 		LOG_ERR("ERR dma stop error.\r\n");
+ 		return stat;
+@@ -805,6 +1156,13 @@ static int uart_hpm_rx_enable(const struct device *dev, uint8_t *buf, const size
+ 	const struct uart_hpm_cfg *config = dev->config;
+ 	UART_Type *uart_base = config->base;
+ 	volatile uint8_t buff;
++	uint32_t idle_timeout_us;
++
++#if !UART_HPM_USE_HW_RX_IDLE
++	if (!data->rx_idle_timer_enabled) {
++		return -ENOTSUP;
++	}
++#endif
+ 
+ 	unsigned int key = irq_lock();
+ 
+@@ -813,23 +1171,85 @@ static int uart_hpm_rx_enable(const struct device *dev, uint8_t *buf, const size
+ 	data->dma_rxinfo.next_dst_addr = NULL;
+ 	data->dma_rxinfo.next_buff_size = 0;
+ 	data->dma_rxinfo.current_mode = 0;
+-	data->idle_time_out_us = timeout_us;
++	if (timeout_us > 0) {
++		idle_timeout_us = (uint32_t)timeout_us;
++	} else {
++		uint32_t baudrate = data->uart_info.baudrate;
++
++		if (baudrate == 0U) {
++			baudrate = config->baud_rate;
++		}
++
++		idle_timeout_us = (baudrate > 0U) ? ((20000000U + baudrate - 1U) / baudrate) : 1U;
++	}
++	data->idle_time_out_us = idle_timeout_us;
+ 	data->dma_rxinfo.current_offset = 0;
+ 	data->dma_rxinfo.current_buf = data->dma_rxinfo.dst_addr;
+ 	data->dma_rxinfo.current_total_size = data->dma_rxinfo.buff_size;
+ 	data->dma_rxinfo.current_size = 0;
+ 	data->dma_rxinfo.dev = (struct device *)dev;
++	data->rx_last_pending_length = data->dma_rxinfo.current_total_size;
++	data->rx_idle_data_seen = false;
+ 	uart_reset_rx_fifo(uart_base);
+ 	while ((uart_base->LSR & UART_LSR_OE_MASK) || \
+ 			(uart_base->LSR & UART_LSR_DR_MASK)) {
+ 		buff = uart_base->RBR & UART_RBR_RBR_MASK;
+ 	}
+ 	async_evt_rx_buf_request(dev);
++#if UART_HPM_USE_HW_RX_IDLE
++	clock_add_to_group(data->gptmr_info.clock_name, 0);
++	irq_enable(config->irq_num);
++	{
++		uint8_t threshold_bits = UART_HPM_HW_IDLE_THRESHOLD_BITS;
++		uint32_t baudrate = data->uart_info.baudrate;
++		uart_rxline_idle_config_t idle_cfg;
++
++		if (baudrate == 0U) {
++			baudrate = config->baud_rate;
++		}
++
++		idle_cfg.detect_enable = true;
++		idle_cfg.detect_irq_enable = true;
++		idle_cfg.idle_cond = uart_rxline_idle_cond_state_machine_idle;
++		idle_cfg.threshold = threshold_bits;
++		uart_init_rxline_idle_detection(uart_base, idle_cfg);
++		/* 不在 DMA 模式打开 "RX FIFO 非空" 中断：
++		 * rx_fifo_level = trg_not_empty，连续数据流下 FIFO 几乎永远非空，
++		 * 该中断会按字节触发（921600 下 ~92k 次/s），ISR 里那套
++		 * uart_is_rxline_idle()/dma_get_status() 把 CPU 吃光（实测 89% 在中断）。
++		 * 数据搬移由 DMA 负责，事件由 DMA 满缓冲回调 + 下面的线路空闲中断产生，
++		 * 这个中断纯属多余。 */
++		uart_enable_irq(uart_base, uart_intr_rx_line_idle);
++		uart_clear_rxline_idle_flag(uart_base);
++		data->rx_idle_poll_us = (baudrate > 0U) ?
++			(((uint32_t)threshold_bits * 1000000U + baudrate - 1U) / baudrate) : 1U;
++		data->rx_idle_poll_us = (data->rx_idle_poll_us + 3U) / 4U;
++		if (data->rx_idle_poll_us == 0U) {
++			data->rx_idle_poll_us = 1U;
++		}
++		/* 上面这个式子在 921600 下算出 ~1 µs：空闲轮询（GPTMR 比较中断 / 软定时器）
++		 * 会以 ~1 MHz 触发，是中断风暴的另一个来源。空闲检测只需要 ms 量级
++		 * ——DMA 满缓冲回调本身就会出事件，这里只做兜底，所以给一个下限。 */
++		if (data->rx_idle_poll_us < 1000U) {
++			data->rx_idle_poll_us = 1000U;
++		}
++	}
++#else
+ 	config_gptmr_to_detect_uart_rx_start(&data->gptmr_info, &data->trgm_info);
+     config_gptmr_to_detect_uart_rx_idle(&data->gptmr_info, &data->trgm_info, data->idle_time_out_us);
++#endif
+ 	uart_hpm_dma_rx_load(dev, data->dma_rxinfo.current_buf, data->dma_rxinfo.current_total_size);
+ 	dma_start(data->dma_rx.dma_dev, data->dma_rx.channel);
+ 	data->dma_rxinfo.current_mode = 1;
++#if UART_HPM_USE_HW_RX_IDLE
++	uart_enable_rxline_idle_detection(uart_base);
++	if (data->rx_idle_timer_enabled) {
++		data->rx_timeout_work_enabled = false;
++	} else {
++		data->rx_timeout_work_enabled = true;
++		k_work_reschedule(&data->rx_timeout_work, K_USEC(data->rx_idle_poll_us));
++	}
++#endif
+ 	irq_unlock(key);
+ 
+ 	return 0;
+@@ -857,6 +1277,15 @@ static void uart_hpm_dma_callback(const struct device *dev, void *arg, uint32_t
+ 		/* identify the origin of this callback */
+ 		if (channel == data->dma_tx.channel) {
+ 			/* this part of the transfer ends */
++			/* 等 FIFO 排空再触发 TX_DONE：DMA 完成仅表示字节搬进 FIFO，
++			 * 串行移出未结束；若提前报 TX_DONE，下一帧 uart_hpm_tx 的
++			 * uart_reset_tx_fifo 会清掉本帧 FIFO 未移出的残留字节（连续发送丢尾）。 */
++			const struct uart_hpm_cfg *config = data->dma_txinfo.dev->config;
++			UART_Type *uart_base = config->base;
++			uint32_t timeout = 100000;   /* 忙等上限（防意外卡死） */
++			while (!(uart_base->LSR & UART_LSR_TEMT_MASK) && timeout) {
++				timeout--;
++			}
+ 			async_evt_tx_done(data->dma_txinfo.dev);
+ 		} else if (channel == data->dma_rx.channel) {
+ 			/* this part of the transfer ends */
+@@ -868,8 +1297,7 @@ static void uart_hpm_dma_callback(const struct device *dev, void *arg, uint32_t
+ 				uart_hpm_rx_disable(data->dma_rxinfo.dev);
+ 			}
+ 		} else {
+-			LOG_ERR("DMA callback channel %d is not valid.",
+-								channel);
++			LOG_ERR("DMA callback channel %d is not valid.", channel);
+ 		}
+ 	}
+ }
+@@ -909,7 +1337,6 @@ static const struct uart_driver_api uart_hpm_driver_api = {
+ #endif
+ };
+ 
+-
+ #define UART_HPMICRO_IRQ_FLAGS_SENSE0(n) 0
+ #define UART_HPMICRO_IRQ_FLAGS_SENSE1(n) DT_INST_IRQ(n, sense)
+ #define UART_HPMICRO_IRQ_FLAGS(n) \
+@@ -932,21 +1359,42 @@ static const struct uart_driver_api uart_hpm_driver_api = {
+ 		irq_enable(DT_INST_IRQN(n));	\
+ 	}
+ #else /* CONFIG_UART_ASYNC_API */
++#if UART_HPM_USE_HW_RX_IDLE
++#define UART_HPMICRO_IDLE_IRQ_CONNECT(n) \
++	COND_CODE_1(DT_INST_NODE_HAS_PROP(n, uart_idle_gptmr_reg), \
++		( \
++		IRQ_CONNECT(DT_INST_IRQN_BY_IDX(n, 1), \
++		DT_INST_IRQ_BY_NAME(n, idletimer, priority),	\
++		uart_hpm_timer_isr, DEVICE_DT_INST_GET(n),	\
++		UART_HPMICRO_IRQ_FLAGS(n));		\
++		irq_enable(DT_INST_IRQN_BY_IDX(n, 1)); \
++		intc_m_enable_irq_with_priority(DT_INST_IRQ_BY_NAME(n, idletimer, irq), \
++						DT_INST_IRQ_BY_NAME(n, idletimer, priority)); \
++		), ())
++#else
++#define UART_HPMICRO_IDLE_IRQ_CONNECT(n) \
++	COND_CODE_1(DT_INST_NODE_HAS_PROP(n, uart_idle_trgm_reg), \
++		( \
++		IRQ_CONNECT(DT_INST_IRQN_BY_IDX(n, 1), \
++		DT_INST_IRQ_BY_NAME(n, idletimer, priority),	\
++		uart_hpm_timer_isr, DEVICE_DT_INST_GET(n),	\
++		UART_HPMICRO_IRQ_FLAGS(n));		\
++		irq_enable(DT_INST_IRQN_BY_IDX(n, 1)); \
++		intc_m_enable_irq_with_priority(DT_INST_IRQ_BY_NAME(n, idletimer, irq), \
++						DT_INST_IRQ_BY_NAME(n, idletimer, priority)); \
++		), ())
++#endif
++
+ #define UART_HPMICRO_IRQ_FUNC_DEFINE(n)	\
+ 	static void irq_config_func##n(const struct device *dev)	\
+ 	{	\
+ 		ARG_UNUSED(dev);	\
+-		IRQ_CONNECT(DT_INST_IRQ_BY_NAME(n, uart, irq), \
++		IRQ_CONNECT(DT_INST_IRQN_BY_IDX(n, 0), \
+ 		DT_INST_IRQ_BY_NAME(n, uart, priority),	\
+ 		uart_hpm_isr, DEVICE_DT_INST_GET(n),	\
+ 		UART_HPMICRO_IRQ_FLAGS(n));		\
+-		irq_enable(DT_INST_IRQ_BY_NAME(n, uart, irq));	\
+-		\
+-		IRQ_CONNECT(DT_INST_IRQ_BY_NAME(n, idletimer, irq), \
+-		DT_INST_IRQ_BY_NAME(n, idletimer, priority),	\
+-		uart_hpm_timer_isr, DEVICE_DT_INST_GET(n),	\
+-		UART_HPMICRO_IRQ_FLAGS(n));		\
+-		irq_enable(DT_INST_IRQ_BY_NAME(n, idletimer, irq));	\
++		irq_enable(DT_INST_IRQN_BY_IDX(n, 0));	\
++		UART_HPMICRO_IDLE_IRQ_CONNECT(n) \
+ 	}
+ 
+ #endif /* !CONFIG_UART_ASYNC_API */
+@@ -958,6 +1406,73 @@ static const struct uart_driver_api uart_hpm_driver_api = {
+ #endif /* CONFIG_UART_INTERRUPT_DRIVEN */
+ 
+ #ifdef CONFIG_UART_ASYNC_API
++#if !defined(CONFIG_UART_INTERRUPT_DRIVEN) && UART_HPM_USE_HW_RX_IDLE
++#define DEV_CONFIG_IDLE_IRQ_FUNC_INIT(n) \
++	COND_CODE_1(DT_INST_NODE_HAS_PROP(n, uart_idle_gptmr_reg), \
++		(.idle_irq_config_func = idle_irq_config_func##n,), ())
++#define UART_HPMICRO_IDLE_IRQ_FUNC_DECLARE(n) \
++	COND_CODE_1(DT_INST_NODE_HAS_PROP(n, uart_idle_gptmr_reg), \
++		(static void idle_irq_config_func##n(const struct device *dev);), ())
++#define UART_HPMICRO_IDLE_IRQ_FUNC_DEFINE(n) \
++	COND_CODE_1(DT_INST_NODE_HAS_PROP(n, uart_idle_gptmr_reg), \
++		(static void idle_irq_config_func##n(const struct device *dev) \
++		{ \
++			ARG_UNUSED(dev); \
++			IRQ_CONNECT(DT_INST_IRQN_BY_IDX(n, 1), \
++			DT_INST_IRQ_BY_NAME(n, idletimer, priority), \
++			uart_hpm_timer_isr, DEVICE_DT_INST_GET(n), \
++			UART_HPMICRO_IRQ_FLAGS(n)); \
++			irq_enable(DT_INST_IRQN_BY_IDX(n, 1)); \
++			intc_m_enable_irq_with_priority(DT_INST_IRQ_BY_NAME(n, idletimer, irq), \
++							DT_INST_IRQ_BY_NAME(n, idletimer, priority)); \
++		}), ())
++#else
++#define DEV_CONFIG_IDLE_IRQ_FUNC_INIT(n)
++#define UART_HPMICRO_IDLE_IRQ_FUNC_DECLARE(n)
++#define UART_HPMICRO_IDLE_IRQ_FUNC_DEFINE(n)
++#endif
++#else
++#define DEV_CONFIG_IDLE_IRQ_FUNC_INIT(n)
++#define UART_HPMICRO_IDLE_IRQ_FUNC_DECLARE(n)
++#define UART_HPMICRO_IDLE_IRQ_FUNC_DEFINE(n)
++#endif
++
++#ifdef CONFIG_UART_ASYNC_API
++#if UART_HPM_USE_HW_RX_IDLE
++#define UART_IDLE_TIMER_DATA_INIT(n)	\
++	COND_CODE_1(DT_INST_NODE_HAS_PROP(n, uart_idle_gptmr_reg),	\
++		(	\
++		.rx_idle_timer_enabled = true,	\
++		.gptmr_info = {	\
++			.ptr = (GPTMR_Type *)DT_INST_PROP(n, uart_idle_gptmr_reg),	\
++			.clock_name = DT_INST_PROP(n, uart_idle_gptmr_clock_name),	\
++			.cmp_ch = 0,	\
++			.cap_ch = 2,	\
++			.irq_index = DT_INST_IRQ_BY_NAME(n, idletimer, irq),	\
++		},),	\
++		(.rx_idle_timer_enabled = false,))
++#else
++#define UART_IDLE_TIMER_DATA_INIT(n)	\
++	COND_CODE_1(DT_INST_NODE_HAS_PROP(n, uart_idle_trgm_reg),	\
++		(	\
++		.rx_idle_timer_enabled = true,	\
++		.trgm_info = {	\
++			.ptr = (TRGM_Type *)DT_INST_PROP(n, uart_idle_trgm_reg),	\
++			.pin_index = DT_INST_PROP(n, uart_idle_trgm_pin),	\
++			.input_src = DT_INST_PROP(n, uart_idle_trgm_input_src),	\
++			.output_gptmr_in = DT_INST_PROP(n, uart_idle_trgm_output_gptmr_in),	\
++			.output_gptmr_synci = DT_INST_PROP(n, uart_idle_trgm_output_gptmr_sync),	\
++		},	\
++		.gptmr_info = {	\
++			.ptr = (GPTMR_Type *)DT_INST_PROP(n, uart_idle_gptmr_reg),	\
++			.clock_name = DT_INST_PROP(n, uart_idle_gptmr_clock_name),	\
++			.cmp_ch = 0,	\
++			.cap_ch = 2,	\
++			.irq_index = DT_INST_IRQ_BY_NAME(n, idletimer, irq),	\
++		},),	\
++		(.rx_idle_timer_enabled = false,))
++#endif
++
+ #define UART_HPMICRO_ASYNC_DATA_INIT(n)	\
+ 		.uart_rx_idle = false,	\
+ 		.uart_receive_data_size = 0,	\
+@@ -965,20 +1480,7 @@ static const struct uart_driver_api uart_hpm_driver_api = {
+ 					.ptr = (UART_Type *)DT_INST_REG_ADDR(n),	\
+ 					.baudrate = DT_INST_PROP(n, current_speed),	\
+ 		},	\
+-		.trgm_info = {	\
+-                .ptr = (TRGM_Type *)DT_INST_PROP(n, uart_idle_trgm_reg),	\
+-                .pin_index = DT_INST_PROP(n, uart_idle_trgm_pin),	\
+-                .input_src = DT_INST_PROP(n, uart_idle_trgm_input_src),	\
+-                .output_gptmr_in = DT_INST_PROP(n, uart_idle_trgm_output_gptmr_in),	\
+-                .output_gptmr_synci = DT_INST_PROP(n, uart_idle_trgm_output_gptmr_sync),	\
+-    	},	\
+-		.gptmr_info = {	\
+-                .ptr = (GPTMR_Type *)DT_INST_PROP(n, uart_idle_gptmr_reg),	\
+-                .clock_name = DT_INST_PROP(n, uart_idle_gptmr_clock_name),	\
+-                .cmp_ch = 0,	\
+-                .cap_ch = 2,	\
+-    	},
+-
++		UART_IDLE_TIMER_DATA_INIT(n)
+ #define UART_DMA_CHANNELS_DATA_INIT(n)		\
+ 		.dma_tx = {						\
+ 			.dma_dev = DEVICE_DT_GET(DT_INST_DMAS_CTLR_BY_NAME(n, tx)), \
+@@ -1018,6 +1520,7 @@ static const struct uart_driver_api uart_hpm_driver_api = {
+ #define HPM_UART_INIT(n)	\
+ 		PINCTRL_DEFINE(n)	\
+ 		UART_HPMICRO_IRQ_FUNC_DECLARE(n)	\
++		UART_HPMICRO_IDLE_IRQ_FUNC_DECLARE(n)	\
+ 		static struct uart_hpm_data uart_hpm_data_##n = {	\
+ 		UART_HPMICRO_ASYNC_DATA_INIT(n)	\
+ 		UART_DMA_CHANNELS_DATA_INIT(n)			\
+@@ -1031,7 +1534,12 @@ static const struct uart_driver_api uart_hpm_driver_api = {
+ 			.baud_rate = DT_INST_PROP(n, current_speed),	\
+ 			.flow_ctrl = DT_INST_PROP(n, hw_flow_control) ?				\
+ 			UART_CFG_FLOW_CTRL_RTS_CTS : UART_CFG_FLOW_CTRL_NONE,		\
++			COND_CODE_1(CONFIG_UART_INTERRUPT_DRIVEN, \
++				(.irq_num = DT_INST_IRQN_BY_IDX(n, 0), \
++				 .irq_priority = DT_INST_IRQ_BY_NAME(n, uart, priority),), \
++				()) \
+ 			DEV_CONFIG_IRQ_FUNC_INIT(n)		\
++			DEV_CONFIG_IDLE_IRQ_FUNC_INIT(n)	\
+ 			PINCTRL_INIT(n)		\
+ 		};	\
+ 		DEVICE_DT_INST_DEFINE(n, uart_hpm_init,	\
+@@ -1040,6 +1548,7 @@ static const struct uart_driver_api uart_hpm_driver_api = {
+ 					&uart_hpm_config_##n, PRE_KERNEL_1,	\
+ 					CONFIG_SERIAL_INIT_PRIORITY,	\
+ 					&uart_hpm_driver_api);	\
+-		UART_HPMICRO_IRQ_FUNC_DEFINE(n)
++		UART_HPMICRO_IRQ_FUNC_DEFINE(n) \
++		UART_HPMICRO_IDLE_IRQ_FUNC_DEFINE(n)
+ 
+ DT_INST_FOREACH_STATUS_OKAY(HPM_UART_INIT)
+diff --git a/drivers/watchdog/CMakeLists.txt b/drivers/watchdog/CMakeLists.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..f3833b1c0c46e4be0fa74268db1521be7720845d
+--- /dev/null
++++ b/drivers/watchdog/CMakeLists.txt
+@@ -0,0 +1,5 @@
++# Copyright (c) 2026 HPMicro
++# SPDX-License-Identifier: Apache-2.0
++
++zephyr_library_amend()
++zephyr_library_sources_ifdef(CONFIG_WDT_HPMICRO wdt_hpmicro.c)
+diff --git a/drivers/watchdog/Kconfig.hpmicro b/drivers/watchdog/Kconfig.hpmicro
+new file mode 100644
+index 0000000000000000000000000000000000000000..e8d8c58b9762b32ca40eacc0702cd04deca053d7
+--- /dev/null
++++ b/drivers/watchdog/Kconfig.hpmicro
+@@ -0,0 +1,19 @@
++# Copyright (c) 2026 HPMicro
++# SPDX-License-Identifier: Apache-2.0
++
++DT_COMPAT_HPMICRO_HPM_EWDG := hpmicro,hpm-ewdg
++
++config WDT_HPMICRO
++	bool "HPM53 EWDG hardware driver"
++	default n
++	depends on DT_HAS_HPMICRO_HPM_EWDG_ENABLED
++	select WATCHDOG
++	select HAS_HPMSDK_EWDG
++	help
++	  Enable the HPM EWDG driver through the Zephyr watchdog API.
++
++config WDT_HPMICRO_WARNING_MS
++	int "EWDG pre-reset warning lead (ms)"
++	depends on WDT_HPMICRO
++	default 100
++	range 50 1000
+diff --git a/drivers/watchdog/wdt_hpmicro.c b/drivers/watchdog/wdt_hpmicro.c
+new file mode 100644
+index 0000000000000000000000000000000000000000..a98f61c8e304c5c84d335c15340bc77e537fa0cd
+--- /dev/null
++++ b/drivers/watchdog/wdt_hpmicro.c
+@@ -0,0 +1,187 @@
++/* SPDX-License-Identifier: Apache-2.0 */
++
++#define DT_DRV_COMPAT hpmicro_hpm_ewdg
++
++#include <zephyr/device.h>
++#include <zephyr/drivers/watchdog.h>
++#include <zephyr/irq.h>
++#include <zephyr/logging/log.h>
++#include <zephyr/sys/util.h>
++
++#include <hpm_clock_drv.h>
++#include <hpm_ewdg_drv.h>
++#include <hpm_plic_drv.h>
++#include <hpm_ppor_drv.h>
++#include <hpm_soc.h>
++
++LOG_MODULE_REGISTER(wdt_hpmicro, CONFIG_WDT_LOG_LEVEL);
++
++struct wdt_hpmicro_config {
++    EWDG_Type *base;
++    clock_name_t clock_name;
++    uint32_t irq_num;
++};
++
++struct wdt_hpmicro_data {
++    uint32_t timeout_ms;
++    wdt_callback_t callback;
++    bool installed;
++    bool configured;
++};
++
++static int wdt_hpmicro_install_timeout(const struct device *dev,
++                                       const struct wdt_timeout_cfg *cfg)
++{
++    struct wdt_hpmicro_data *data = dev->data;
++
++    if (data->configured) {
++        return -EBUSY;
++    }
++    if (cfg == NULL || cfg->window.max == 0U || cfg->window.min != 0U ||
++        cfg->flags != WDT_FLAG_RESET_SOC) {
++        return -ENOTSUP;
++    }
++
++    data->timeout_ms = cfg->window.max;
++    data->callback = cfg->callback;
++    data->installed = true;
++    return 0;
++}
++
++static int wdt_hpmicro_setup(const struct device *dev, uint8_t options)
++{
++    const struct wdt_hpmicro_config *cfg = dev->config;
++    struct wdt_hpmicro_data *data = dev->data;
++    const uint32_t unsupported = ~(WDT_OPT_PAUSE_IN_SLEEP |
++                                   WDT_OPT_PAUSE_HALTED_BY_DBG);
++
++    if ((options & unsupported) != 0U) {
++        return -ENOTSUP;
++    }
++    if (!data->installed) {
++        return -EINVAL;
++    }
++    if (data->configured) {
++        return -EBUSY;
++    }
++    if (data->callback != NULL &&
++        data->timeout_ms <= CONFIG_WDT_HPMICRO_WARNING_MS) {
++        return -EINVAL;
++    }
++
++    const uint32_t reset_flags = ppor_reset_get_flags(HPM_PPOR);
++    ppor_reset_clear_flags(HPM_PPOR, BIT(16));
++
++    ewdg_config_t ewdg_cfg;
++    ewdg_get_default_config(cfg->base, &ewdg_cfg);
++    ewdg_cfg.enable_watchdog = true;
++    ewdg_cfg.int_rst_config.enable_timeout_reset = true;
++    ewdg_cfg.int_rst_config.enable_timeout_interrupt =
++        data->callback != NULL;
++    ewdg_cfg.ctrl_config.use_lowlevel_timeout = false;
++    ewdg_cfg.ctrl_config.cnt_clk_sel = ewdg_cnt_clk_src_ext_osc_clk;
++    ewdg_cfg.ctrl_config.timeout_reset_us = data->timeout_ms * 1000U;
++    if (data->callback != NULL) {
++        const uint32_t warning_ms =
++            MIN(CONFIG_WDT_HPMICRO_WARNING_MS, data->timeout_ms - 1U);
++        ewdg_cfg.ctrl_config.timeout_interrupt_us =
++            (data->timeout_ms - warning_ms) * 1000U;
++    }
++    ewdg_cfg.ctrl_config.keep_running_in_debug_mode =
++        (options & WDT_OPT_PAUSE_HALTED_BY_DBG) == 0U;
++    ewdg_cfg.ctrl_config.low_power_mode =
++        (options & WDT_OPT_PAUSE_IN_SLEEP) != 0U
++            ? ewdg_low_power_mode_halt
++            : ewdg_low_power_mode_work_clock_normal;
++    ewdg_cfg.cnt_src_freq = 32768U;
++
++    if (ewdg_init(cfg->base, &ewdg_cfg) != status_success ||
++        ewdg_refresh(cfg->base) != status_success) {
++        return -EIO;
++    }
++
++    if (data->callback != NULL) {
++        irq_enable(cfg->irq_num);
++    }
++    data->configured = true;
++    if ((reset_flags & BIT(16)) != 0U) {
++        LOG_WRN("last reset: EWDG0");
++    }
++    LOG_INF("HPM EWDG ready: timeout=%ums", data->timeout_ms);
++    return 0;
++}
++
++static int wdt_hpmicro_disable(const struct device *dev)
++{
++    const struct wdt_hpmicro_config *cfg = dev->config;
++    struct wdt_hpmicro_data *data = dev->data;
++
++    if (!data->configured) {
++        return -EFAULT;
++    }
++
++    irq_disable(cfg->irq_num);
++    ewdg_disable(cfg->base);
++    data->installed = false;
++    data->configured = false;
++    return 0;
++}
++
++static int wdt_hpmicro_feed(const struct device *dev, int channel_id)
++{
++    const struct wdt_hpmicro_config *cfg = dev->config;
++    const struct wdt_hpmicro_data *data = dev->data;
++
++    if (!data->configured || channel_id != 0) {
++        return -EINVAL;
++    }
++    return ewdg_refresh(cfg->base) == status_success ? 0 : -EIO;
++}
++
++static void wdt_hpmicro_isr(const void *arg)
++{
++    const struct device *dev = arg;
++    const struct wdt_hpmicro_config *cfg = dev->config;
++    struct wdt_hpmicro_data *data = dev->data;
++    const uint32_t status = ewdg_get_status_flags(cfg->base);
++
++    irq_disable(cfg->irq_num);
++    if ((status & EWDG_EVENT_TIMEOUT_INTERRUPT) != 0U &&
++        data->callback != NULL) {
++        data->callback(dev, 0);
++    }
++    ewdg_clear_status_flags(
++        cfg->base, status & ~EWDG_EVENT_TIMEOUT_INTERRUPT);
++}
++
++static const struct wdt_driver_api wdt_hpmicro_api = {
++    .install_timeout = wdt_hpmicro_install_timeout,
++    .setup = wdt_hpmicro_setup,
++    .disable = wdt_hpmicro_disable,
++    .feed = wdt_hpmicro_feed,
++};
++
++#define WDT_HPMICRO_INIT(n)                                                   \
++    static const struct wdt_hpmicro_config wdt_hpmicro_config_##n = {         \
++        .base = (EWDG_Type *)DT_INST_REG_ADDR(n),                             \
++        .clock_name = (clock_name_t)DT_INST_PROP(n, clk_name),                \
++        .irq_num = DT_INST_IRQN(n),                                            \
++    };                                                                        \
++    static struct wdt_hpmicro_data wdt_hpmicro_data_##n;                      \
++    static int wdt_hpmicro_init_##n(const struct device *dev)                 \
++    {                                                                         \
++        const struct wdt_hpmicro_config *cfg = dev->config;                   \
++        if (IS_ENABLED(CONFIG_SOC_SERIES_HPM5300)) {                          \
++            __plic_enable_irq_edge_trigger(HPM_PLIC_BASE, cfg->irq_num);      \
++        }                                                                     \
++        IRQ_CONNECT(DT_INST_IRQN(n), DT_INST_IRQ(n, priority),               \
++                    wdt_hpmicro_isr, DEVICE_DT_INST_GET(n), 0);               \
++        clock_add_to_group(cfg->clock_name, 0);                               \
++        return 0;                                                             \
++    }                                                                         \
++    DEVICE_DT_INST_DEFINE(n, wdt_hpmicro_init_##n, NULL,                      \
++                          &wdt_hpmicro_data_##n, &wdt_hpmicro_config_##n,     \
++                          POST_KERNEL, CONFIG_KERNEL_INIT_PRIORITY_DEVICE,    \
++                          &wdt_hpmicro_api);
++
++DT_INST_FOREACH_STATUS_OKAY(WDT_HPMICRO_INIT)
+diff --git a/dts/bindings/can/hpmicro,hpm-mcan.yaml b/dts/bindings/can/hpmicro,hpm-mcan.yaml
+index 58fe797d09df50c9eeb8f7a0f3e9e29c09462399..76ac0a1cf0c2b940803ed2d373cb083654f8c49e 100644
+--- a/dts/bindings/can/hpmicro,hpm-mcan.yaml
++++ b/dts/bindings/can/hpmicro,hpm-mcan.yaml
+@@ -5,7 +5,11 @@ description: HPMicro HPM MCAN
+ 
+ compatible: "hpmicro,hpm-mcan"
+ 
+-include: ["can-controller.yaml","pinctrl-device.yaml"]
++# can-fd-controller.yaml 提供 bitrate-data / sample-point-data（CAN FD 数据段位率）。
++# 本驱动在 CONFIG_CAN_FD_MODE=y 时是完整 FD 控制器，缺了它节点里写这两个属性会直接
++# 报 "appears in ... but is not declared in 'properties:'" 编译失败。
++# （can-fd-controller.yaml 自己已经 include 了 can-controller.yaml）
++include: ["can-fd-controller.yaml","pinctrl-device.yaml"]
+ 
+ properties:
+   reg:
+diff --git a/dts/bindings/watchdog/hpmicro,hpm-ewdg.yaml b/dts/bindings/watchdog/hpmicro,hpm-ewdg.yaml
+new file mode 100644
+index 0000000000000000000000000000000000000000..fcfb8338ee0077502a90fb943e2dda7539386b20
+--- /dev/null
++++ b/dts/bindings/watchdog/hpmicro,hpm-ewdg.yaml
+@@ -0,0 +1,14 @@
++# SPDX-License-Identifier: Apache-2.0
++
++description: HPM53 enhanced watchdog
++compatible: "hpmicro,hpm-ewdg"
++include: base.yaml
++
++properties:
++  reg:
++    required: true
++  interrupts:
++    required: true
++  clk-name:
++    type: int
++    required: true
+diff --git a/dts/riscv/hpmicro/hpm53xx.dtsi b/dts/riscv/hpmicro/hpm53xx.dtsi
+index 13a9a87603f92de2b4a9ed052f02a265422c9d18..4d1be0c6951851db1d568703bf26990f25c613ce 100644
+--- a/dts/riscv/hpmicro/hpm53xx.dtsi
++++ b/dts/riscv/hpmicro/hpm53xx.dtsi
+@@ -5,7 +5,7 @@
+ 
+ /dts-v1/;
+ #include <zephyr/dt-bindings/gpio/gpio.h>
+-#include <dt-bindings/clock/hpmicro-clocks.h>
++#include <dt-bindings/clock/hpm5361-clocks.h>
+ #include <mem.h>
+ #include <freq.h>
+ 
+@@ -20,7 +20,8 @@
+ 			compatible = "andestech,andescore-d25", "riscv"; /* riscv custom */
+ 			reg = <0>;
+ 			status = "okay";
+-			riscv,isa = "rv32gc_xandes";
++			riscv,isa-base = "rv32i";
++			riscv,isa-extensions = "i", "m", "a", "f", "d", "c", "zicsr", "zifencei", "xandes";
+ 			i-cache-line-size = <64>;
+ 			d-cache-line-size = <64>;
+ 
+@@ -39,11 +40,12 @@
+ 		compatible = "hpmicro,hpm53xx";
+ 		ranges;
+ 
+-		clk: clock-controller@f40c0000 {
+-			compatible = "hpmicro,hpm-pllv2";
+-			reg = <0xf40c0000 0x4000>;
+-			clock-frequency = <DT_FREQ_M(960)>;
+-			reg-names = "clk";
++		clk: clock-controller@f4000000 {
++			compatible = "hpmicro,hpm-clock";
++			reg = <0xf4000000 DT_SIZE_K(256)
++				0xf40c0000 DT_SIZE_K(16)>;
++			reg-names = "sysctl", "pll";
++			#clock-cells = <3>;
+ 			status = "okay";
+ 		};
+ 
+@@ -67,6 +69,12 @@
+ 			reg = <0x1060000 DT_SIZE_K(128)>;
+ 		};
+ 
++		ahb_sram: memory@f0400000 {
++			compatible = "zephyr,memory-region";
++			reg = <0xf0400000 DT_SIZE_K(32)>;
++			zephyr,memory-region = "AHB_SRAM";
++		};
++
+ 		plic: interrupt-controller@e4000000 {
+ 			compatible = "sifive,plic-1.0.0";
+ 			#address-cells = <1>;
+@@ -78,7 +86,7 @@
+ 			reg-names = "prio", "irq_en", "reg";
+ 			riscv,max-priority = <255>;
+ 			riscv,ndev = <1023>;
+-			interrupts-extended = <&cpu0_intc 0>;
++			interrupts-extended = <&cpu0_intc 11>;
+ 		};
+ 
+ 		plic_sw: interrupt-controller@e6400000 {
+@@ -87,14 +95,14 @@
+ 			#interrupt-cells = <2>;
+ 			interrupt-controller;
+ 			reg = <0xe6400000 0x00400000>;
+-			interrupts-extended = <&cpu0_intc 0>;
++			interrupts-extended = <&cpu0_intc 3>;
+ 		};
+ 
+ 		mtimer: machine-timer@e6000000 {
+ 			compatible = "andestech,machine-timer";
+ 			reg = <0xe6000000 0x1
+ 			0xe6000008 0x1>;
+-			interrupts-extended = <&cpu0_intc 0>;
++			interrupts-extended = <&cpu0_intc 7>;
+ 		};
+ 
+ 		fgpio: fgpio@C0000 {
+@@ -120,10 +128,82 @@
+ 			reg = <0xf0040000 0x1000>;
+ 			interrupts = <13 1>, <5 1>;
+ 			interrupt-names = "uart", "idletimer";
+-			clock-name = <19005459>;
+-			clock-src = <0>;
++			clocks = <&clk CLOCK_UART0 CLK_SRC_PLL1_CLK0 6>;
++			interrupt-parent = <&plic>;
++			status = "disabled";
++		};
++
++		uart1: serial@f0044000 {
++			compatible = "hpmicro,hpm-uart";
++			reg = <0xf0044000 0x1000>;
++			interrupts = <14 1>, <6 1>;
++			interrupt-names = "uart", "idletimer";
++			clocks = <&clk CLOCK_UART1 CLK_SRC_PLL1_CLK0 6>;
++			interrupt-parent = <&plic>;
++			status = "disabled";
++		};
++
++		uart3: serial@f004c000 {
++			compatible = "hpmicro,hpm-uart";
++			reg = <0xf004c000 0x1000>;
++			interrupts = <16 1>, <7 1>;
++			interrupt-names = "uart", "idletimer";
++			clocks = <&clk CLOCK_UART3 CLK_SRC_PLL1_CLK0 6>;
++			interrupt-parent = <&plic>;
++			status = "disabled";
++		};
++
++		uart4: serial@f0050000 {
++			compatible = "hpmicro,hpm-uart";
++			reg = <0xf0050000 0x1000>;
++			interrupts = <17 1>, <8 1>;
++			interrupt-names = "uart", "idletimer";
++			clocks = <&clk CLOCK_UART4 CLK_SRC_PLL1_CLK0 6>;
++			interrupt-parent = <&plic>;
++			status = "disabled";
++		};
++
++		spi1: spi@f0074000 {
++			compatible = "hpmicro,hpm-spi";
++			reg = <0xf0074000 DT_SIZE_K(16)>;
++			interrupts = <26 1>;
++			interrupt-parent = <&plic>;
++			status = "disabled";
++			#address-cells = <1>;
++			#size-cells = <0>;
++			cs-sck-delay = <3>;
++			cs-minimum-high-time = <11>;
++		};
++
++		spi2: spi@f0078000 {
++			compatible = "hpmicro,hpm-spi";
++			reg = <0xf0078000 DT_SIZE_K(16)>;
++			interrupts = <27 1>;
+ 			interrupt-parent = <&plic>;
+ 			status = "disabled";
++			#address-cells = <1>;
++			#size-cells = <0>;
++			cs-sck-delay = <3>;
++			cs-minimum-high-time = <11>;
++		};
++
++		mcan0: can@f0280000 {
++			compatible = "hpmicro,hpm-mcan";
++			reg = <0xf0280000 DT_SIZE_K(16)>;
++			interrupts = <35 1>;
++			interrupt-parent = <&plic>;
++			clk-name = <CLOCK_CAN0>;
++			clk-source = <CLK_SRC_PLL1_CLK0>;
++			clk-divider = <5>;
++			status = "disabled";
++		};
++
++		pwm1: pwm@f031c000 {
++			compatible = "hpmicro,hpm-pwm";
++			reg = <0xf031c000 DT_SIZE_K(16)>;
++			clocks = <&clk CLOCK_MOT0 CLOCK_AHB 1>;
++			status = "disabled";
++			#pwm-cells = <3>;
+ 		};
+ 
+ 		pinctrl: pin-controller@f4040000 {
+@@ -140,7 +220,7 @@
+ 
+ 		hdma: hdma@f00c8000 {
+ 			#dma-cells = <2>;
+-			compatible = "hpmicro,hpm-dma";
++			compatible = "hpmicro,hpm-dmav2";
+ 			dma-channels = <8>;
+ 			dma-requests = <116>;
+ 			reg = <0xf00c8000 0x4000>,
+@@ -157,9 +237,9 @@
+ 			interrupt-parent = <&plic>;
+ 			num-bidir-endpoints = <16>;
+ 			status = "disabled";
+-		;
+ 	};
+ };
++};
+ 
+ &gpio0 {
+ 	gpioa: gpio@0 {
+@@ -203,4 +283,4 @@
+ 		interrupt-parent = <&plic>;
+ 		status = "disabled";
+ 	};
+-};
+\ No newline at end of file
++};
+diff --git a/modules/hpm_sdk/CMakeLists.txt b/modules/hpm_sdk/CMakeLists.txt
+index cf9d62d00ecc5639a05dea471e6de549ec7fd90e..854b63ea9fe91fc8c8d70a8e1d35bef116e1d0d5 100644
+--- a/modules/hpm_sdk/CMakeLists.txt
++++ b/modules/hpm_sdk/CMakeLists.txt
+@@ -10,6 +10,10 @@ endif()
+ set(HPM_SDK_BINARY_DIR ${CMAKE_BINARY_DIR}/hpm_sdk)
+ set(HPM_BOARD_DIR ${CONFIG_BOARD})
+ string(TOUPPER ${SOC_NAME} HPM_SOC_TOUPPER)
++# SELF-MAINTAINED - HPM5E3Y 与 HPM5E31 寄存器级完全一致，hpm_sdk 仅有 HPM5E31 编译目标
++if(HPM_SOC_TOUPPER STREQUAL "HPM5E3Y")
++	set(HPM_SOC_TOUPPER "HPM5E31")
++endif()
+ set(HPM_SOC ${HPM_SOC_TOUPPER})
+ string(TOUPPER ${SOC_SERIES} HPM_SOC_SERIES_TOUPPER)
+ set(HPM_SOC_SERIES ${HPM_SOC_SERIES_TOUPPER})
+diff --git a/modules/hpm_sdk/Kconfig b/modules/hpm_sdk/Kconfig
+index 629151170d7ae53467f8a36c5c07b18aec5ce4c8..7f93a83936f874c5eefe2c7926b2120eb4779328 100644
+--- a/modules/hpm_sdk/Kconfig
++++ b/modules/hpm_sdk/Kconfig
+@@ -28,6 +28,8 @@ config HAS_HPMSDK_PDMA
+ 	bool
+ config HAS_HPMSDK_WDG
+ 	bool
++config HAS_HPMSDK_EWDG
++	bool
+ config HAS_HPMSDK_DMA
+ 	bool
+ config HAS_HPMSDK_DMAV2
+diff --git a/soc/hpmicro/CMakeLists.txt b/soc/hpmicro/CMakeLists.txt
+index 4704b0816180f7309efe62dd4cf2f6a3bbee4000..e653aef0e0995051a449d357e917c13886e161f2 100644
+--- a/soc/hpmicro/CMakeLists.txt
++++ b/soc/hpmicro/CMakeLists.txt
+@@ -2,7 +2,15 @@
+ # SPDX-License-Identifier: Apache-2.0
+ 
+ add_subdirectory(common)
+-add_subdirectory(${SOC_SERIES})
++if(SOC_SERIES STREQUAL "HPM5300")
++	# SELF-MAINTAINED — 用户自研 HPM5300 SoC 支持（sdk_glue_user 小树）
++	add_subdirectory(${ZEPHYR_SDK_GLUE_MODULE_DIR}/../sdk_glue_user/soc/hpmicro/HPM5300 ${CMAKE_CURRENT_BINARY_DIR}/HPM5300)
++elseif(SOC_SERIES STREQUAL "HPM5E00")
++	# SELF-MAINTAINED — 用户自研 HPM5E00 SoC 支持（sdk_glue_user 小树）
++	add_subdirectory(${ZEPHYR_SDK_GLUE_MODULE_DIR}/../sdk_glue_user/soc/hpmicro/HPM5E00 ${CMAKE_CURRENT_BINARY_DIR}/HPM5E00)
++else()
++	add_subdirectory(${SOC_SERIES})
++endif()
+ 
+ zephyr_linker_sources_ifdef(CONFIG_HPM_BOOT_HEADER ROM_START SORT_KEY $ common/boot_header.ld)
+ zephyr_linker_sources_ifdef(CONFIG_HPM_BOOT_HEADER ROM_START SORT_KEY + common/app_load_offset.ld)
+@@ -12,4 +20,4 @@ zephyr_linker_sources_ifdef(CONFIG_BOOTLOADER_MCUBOOT ROM_START SORT_KEY ! $ENV{
+ zephyr_linker_sources_ifdef(CONFIG_BOOTLOADER_MCUBOOT ROM_START SORT_KEY $ $ENV{ZEPHYR_BASE}/arch/common/fill_with_zeros.ld)
+ zephyr_linker_sources_ifdef(CONFIG_BOOTLOADER_MCUBOOT ROM_START SORT_KEY + $ENV{ZEPHYR_BASE}/arch/common/rom_start_offset.ld)
+ zephyr_linker_sources_ifdef(CONFIG_BOOTLOADER_MCUBOOT ROM_START SORT_KEY - common/entry.ld)
+-zephyr_linker_sources(ITCM_SECTION SORT_KEY 0 common/ISR.ld)
+\ No newline at end of file
++zephyr_linker_sources(ITCM_SECTION SORT_KEY 0 common/ISR.ld)
+diff --git a/soc/hpmicro/HPM6200/Kconfig.defconfig.series b/soc/hpmicro/HPM6200/Kconfig.defconfig.series
+index 714fb4419dfa4722464dcf7747153fff4a5633ee..241ac4e5a5186a010a37c9309221646e8284361f 100644
+--- a/soc/hpmicro/HPM6200/Kconfig.defconfig.series
++++ b/soc/hpmicro/HPM6200/Kconfig.defconfig.series
+@@ -25,8 +25,6 @@ config DCACHE
+ config RISCV_SOC_INTERRUPT_INIT
+ 	default y
+ 
+-config RISCV_GP
+-	default y
+ 
+ config 2ND_LVL_ISR_TBL_OFFSET
+ 	default 12
+diff --git a/soc/hpmicro/HPM6700/Kconfig.defconfig.series b/soc/hpmicro/HPM6700/Kconfig.defconfig.series
+index a8156ed727cbb31fdada38a922db1d576508f6b2..8a2c07c9eb0e9203ecd8e789226751975140919c 100644
+--- a/soc/hpmicro/HPM6700/Kconfig.defconfig.series
++++ b/soc/hpmicro/HPM6700/Kconfig.defconfig.series
+@@ -25,8 +25,6 @@ config DCACHE
+ config RISCV_SOC_INTERRUPT_INIT
+ 	default y
+ 
+-config RISCV_GP
+-	default y
+ 
+ config 2ND_LVL_ISR_TBL_OFFSET
+ 	default 12
+diff --git a/soc/hpmicro/HPM6800/Kconfig.defconfig.series b/soc/hpmicro/HPM6800/Kconfig.defconfig.series
+index a4b8fe3cf980f0ca75b9f5e7c4e0b18f2bc054d3..5b677fa0506b538b9c0dd19f7043b741fa54f99b 100644
+--- a/soc/hpmicro/HPM6800/Kconfig.defconfig.series
++++ b/soc/hpmicro/HPM6800/Kconfig.defconfig.series
+@@ -25,8 +25,6 @@ config DCACHE
+ config RISCV_SOC_INTERRUPT_INIT
+ 	default y
+ 
+-config RISCV_GP
+-	default y
+ 
+ config 2ND_LVL_ISR_TBL_OFFSET
+ 	default 12
+diff --git a/soc/hpmicro/HPM6E00/Kconfig.defconfig.series b/soc/hpmicro/HPM6E00/Kconfig.defconfig.series
+index d2724b674f693a39491303571fae06dc0d0d93dc..ba7af0ac8ea0e4ee9138808d9a08a8def9735db9 100644
+--- a/soc/hpmicro/HPM6E00/Kconfig.defconfig.series
++++ b/soc/hpmicro/HPM6E00/Kconfig.defconfig.series
+@@ -25,8 +25,6 @@ config DCACHE
+ config RISCV_SOC_INTERRUPT_INIT
+ 	default y
+ 
+-config RISCV_GP
+-	default y
+ 
+ config 2ND_LVL_ISR_TBL_OFFSET
+ 	default 12
+diff --git a/soc/hpmicro/Kconfig b/soc/hpmicro/Kconfig
+index 37a4dd5b8a6947456b3d6f6e487c768485490817..5ba7037bc92b97c2ad67384f0c87155765eb55e5 100644
+--- a/soc/hpmicro/Kconfig
++++ b/soc/hpmicro/Kconfig
+@@ -9,6 +9,10 @@ config SOC_FAMILY_HPM
+ if SOC_FAMILY_HPM
+ 
+ rsource "${ZEPHYR_SDK_GLUE_MODULE_DIR}/soc/hpmicro/*/Kconfig"
++# SELF-MAINTAINED — 用户自研 HPM5300 SoC 支持（sdk_glue_user 小树）
++rsource "${ZEPHYR_SDK_GLUE_MODULE_DIR}/../sdk_glue_user/soc/hpmicro/HPM5300/Kconfig"
++# SELF-MAINTAINED — 用户自研 HPM5E00 SoC 支持（sdk_glue_user 小树）
++rsource "${ZEPHYR_SDK_GLUE_MODULE_DIR}/../sdk_glue_user/soc/hpmicro/HPM5E00/Kconfig"
+ 
+ config USE_DT_CODE_PARTITION
+ 	default y if BOOTLOADER_MCUBOOT
+@@ -59,4 +63,4 @@ config ROM_START_OFFSET
+ 	default 0x200
+ 
+ endif # BOOTLOADER_MCUBOOT
+-endif # SOC_FAMILY_HPM
+\ No newline at end of file
++endif # SOC_FAMILY_HPM
+diff --git a/soc/hpmicro/Kconfig.defconfig b/soc/hpmicro/Kconfig.defconfig
+index 5fd59fa3dd9166a7fd470bcf24d83223e1f0d951..1542191fe7771dc3a9735ae358d38202db720cca 100644
+--- a/soc/hpmicro/Kconfig.defconfig
++++ b/soc/hpmicro/Kconfig.defconfig
+@@ -8,6 +8,10 @@
+ if SOC_FAMILY_HPM
+ 
+ rsource "${ZEPHYR_SDK_GLUE_MODULE_DIR}/soc/hpmicro/*/Kconfig.defconfig.series"
++# SELF-MAINTAINED — 用户自研 HPM5300 SoC 支持（sdk_glue_user 小树）
++rsource "${ZEPHYR_SDK_GLUE_MODULE_DIR}/../sdk_glue_user/soc/hpmicro/HPM5300/Kconfig.defconfig.series"
++# SELF-MAINTAINED — 用户自研 HPM5E00 SoC 支持（sdk_glue_user 小树）
++rsource "${ZEPHYR_SDK_GLUE_MODULE_DIR}/../sdk_glue_user/soc/hpmicro/HPM5E00/Kconfig.defconfig.series"
+ 
+ config SERIAL_INIT_PRIORITY
+     default KERNEL_INIT_PRIORITY_DEVICE
+@@ -19,4 +23,4 @@ config PINCTRL
+ config CLOCK_CONTROL
+     default y
+ 
+-endif
+\ No newline at end of file
++endif
+diff --git a/soc/hpmicro/Kconfig.soc b/soc/hpmicro/Kconfig.soc
+index 0ac112d752521282f5e5ad086e36fe56887ff83b..4ef5fe94716e6f9bab6ea2520e2b0ccbf8a08f12 100644
+--- a/soc/hpmicro/Kconfig.soc
++++ b/soc/hpmicro/Kconfig.soc
+@@ -7,4 +7,8 @@ config SOC_FAMILY_HPM
+ config SOC_FAMILY
+     default "hpmicro" if SOC_FAMILY_HPM
+ 
+-source "${ZEPHYR_SDK_GLUE_MODULE_DIR}/soc/hpmicro/*/Kconfig.soc"
+\ No newline at end of file
++source "${ZEPHYR_SDK_GLUE_MODULE_DIR}/soc/hpmicro/*/Kconfig.soc"
++# SELF-MAINTAINED — 用户自研 HPM5300 SoC 支持（sdk_glue_user 小树）
++source "${ZEPHYR_SDK_GLUE_MODULE_DIR}/../sdk_glue_user/soc/hpmicro/HPM5300/Kconfig.soc"
++# SELF-MAINTAINED — 用户自研 HPM5E00 SoC 支持（sdk_glue_user 小树）
++source "${ZEPHYR_SDK_GLUE_MODULE_DIR}/../sdk_glue_user/soc/hpmicro/HPM5E00/Kconfig.soc"
+diff --git a/soc/hpmicro/soc.yml b/soc/hpmicro/soc.yml
+index 43729e95f73c2cb5c59f89e899924173fe382d30..8908ea4f344e0e49bdf6acd887b313350b3d8280 100644
+--- a/soc/hpmicro/soc.yml
++++ b/soc/hpmicro/soc.yml
+@@ -7,6 +7,9 @@ family:
+     - name: hpm5321
+     - name: hpm5331
+     - name: hpm5361
++  - name: hpm5e00
++    socs:
++    - name: hpm5e3y
+   - name: hpm6200
+     socs:
+     - name: hpm6240
