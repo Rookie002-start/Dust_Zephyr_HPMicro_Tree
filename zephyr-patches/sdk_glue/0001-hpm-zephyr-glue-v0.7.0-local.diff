@@ -1,5 +1,5 @@
 diff --git a/boards/hpmicro/hpm6200evk/board.yml b/boards/hpmicro/hpm6200evk/board.yml
-index e8114bd5b4c72d7e38691a298f89f4b07caedd86..2b975f8c720b2ebd9b5e224b674d2bd363d599bd 100644
+index e8114bd..2b975f8 100644
 --- a/boards/hpmicro/hpm6200evk/board.yml
 +++ b/boards/hpmicro/hpm6200evk/board.yml
 @@ -1,5 +1,6 @@
@@ -10,7 +10,7 @@ index e8114bd5b4c72d7e38691a298f89f4b07caedd86..2b975f8c720b2ebd9b5e224b674d2bd3
    socs:
      - name: hpm6280
 diff --git a/boards/hpmicro/hpm6750evk2/board.yml b/boards/hpmicro/hpm6750evk2/board.yml
-index d93e3f8cf0bbf54a0e3638066357084e19775527..bf4a1eb9d6cd35d259e6879d2ad9063c31aaebdf 100644
+index d93e3f8..bf4a1eb 100644
 --- a/boards/hpmicro/hpm6750evk2/board.yml
 +++ b/boards/hpmicro/hpm6750evk2/board.yml
 @@ -1,5 +1,6 @@
@@ -21,7 +21,7 @@ index d93e3f8cf0bbf54a0e3638066357084e19775527..bf4a1eb9d6cd35d259e6879d2ad9063c
    socs:
      - name: hpm6750
 diff --git a/boards/hpmicro/hpm6800evk/board.yml b/boards/hpmicro/hpm6800evk/board.yml
-index d1f4c986e02a952bfb950b22f9de8ee0699f3728..52aeab980ffdbb9c8d7e2f674714898f2f9acbe7 100644
+index d1f4c98..52aeab9 100644
 --- a/boards/hpmicro/hpm6800evk/board.yml
 +++ b/boards/hpmicro/hpm6800evk/board.yml
 @@ -1,5 +1,6 @@
@@ -32,7 +32,7 @@ index d1f4c986e02a952bfb950b22f9de8ee0699f3728..52aeab980ffdbb9c8d7e2f674714898f
    socs:
      - name: hpm6880
 diff --git a/boards/hpmicro/hpm6e00evk/board.yml b/boards/hpmicro/hpm6e00evk/board.yml
-index f1e42bdd27374a966674288bc8b611eb4c054d43..a117be1985ac700a5959384040b337f41fd1770e 100644
+index f1e42bd..a117be1 100644
 --- a/boards/hpmicro/hpm6e00evk/board.yml
 +++ b/boards/hpmicro/hpm6e00evk/board.yml
 @@ -1,5 +1,6 @@
@@ -43,7 +43,7 @@ index f1e42bdd27374a966674288bc8b611eb4c054d43..a117be1985ac700a5959384040b337f4
    socs:
      - name: hpm6e80
 diff --git a/drivers/CMakeLists.txt b/drivers/CMakeLists.txt
-index 106b89143238debaa15d25ff1c2a1f0ade7fff9e..a1614257f91af8886a9553dd8a9bf902e0301269 100644
+index 106b891..a161425 100644
 --- a/drivers/CMakeLists.txt
 +++ b/drivers/CMakeLists.txt
 @@ -3,23 +3,25 @@
@@ -90,7 +90,7 @@ index 106b89143238debaa15d25ff1c2a1f0ade7fff9e..a1614257f91af8886a9553dd8a9bf902
 +add_subdirectory_ifdef(CONFIG_FLASH flash)
 +add_subdirectory_ifdef(CONFIG_WATCHDOG watchdog)
 diff --git a/drivers/Kconfig b/drivers/Kconfig
-index 2c9d5dfc2ae4508dfaeb886a22f32ff66cd88499..e0a3a90d0924e5820c8e849d948ccd62c7ca1155 100644
+index 2c9d5df..e0a3a90 100644
 --- a/drivers/Kconfig
 +++ b/drivers/Kconfig
 @@ -20,4 +20,5 @@ rsource "usb/udc/Kconfig.hpmicro"
@@ -100,7 +100,7 @@ index 2c9d5dfc2ae4508dfaeb886a22f32ff66cd88499..e0a3a90d0924e5820c8e849d948ccd62
 +rsource "watchdog/Kconfig.hpmicro"
  endmenu
 diff --git a/drivers/can/CMakeLists.txt b/drivers/can/CMakeLists.txt
-index 6e78b193a8c456ef21e2ffe3e8b7ecae748a3225..abda247b6b84348542477e39840a64a9bd1d36f7 100644
+index 6e78b19..abda247 100644
 --- a/drivers/can/CMakeLists.txt
 +++ b/drivers/can/CMakeLists.txt
 @@ -1,6 +1,12 @@
@@ -119,7 +119,7 @@ index 6e78b193a8c456ef21e2ffe3e8b7ecae748a3225..abda247b6b84348542477e39840a64a9
  zephyr_library_sources_ifdef(CONFIG_MCAN_HPMICRO mcan_hpmicro.c)
 \ No newline at end of file
 diff --git a/drivers/can/Kconfig.hpmicro b/drivers/can/Kconfig.hpmicro
-index ae62d97dbb2d7c674e68897cc507dfb3fa14ad6e..55864ffa5baeffe7fc4206d67876ac923d54432e 100644
+index ae62d97..55864ff 100644
 --- a/drivers/can/Kconfig.hpmicro
 +++ b/drivers/can/Kconfig.hpmicro
 @@ -9,6 +9,7 @@ config CAN_HPMICRO
@@ -139,26 +139,19 @@ index ae62d97dbb2d7c674e68897cc507dfb3fa14ad6e..55864ffa5baeffe7fc4206d67876ac92
      help
          Enable the HPMICRO MCAN driver
 diff --git a/drivers/can/mcan_hpmicro.c b/drivers/can/mcan_hpmicro.c
-index a5327dfecad82df0f726b330cfc68f85886774ef..a390be150758da69fb71deb00a7f4f3aa140707a 100644
+index a5327df..cbe5b9f 100644
 --- a/drivers/can/mcan_hpmicro.c
 +++ b/drivers/can/mcan_hpmicro.c
-@@ -28,19 +28,41 @@
+@@ -27,20 +27,33 @@
+ #define HPM_MCAN_BITRATE_MAX (1000000UL) /* 1Mbps */
  #define HPM_MCAN_FD_BITRATE_MAX (8000000UL) /* 8Mbps */
  
- static mcan_rx_message_t s_can_rx_buf;
+-static mcan_rx_message_t s_can_rx_buf;
 -static volatile bool has_sent_out;
 -
  #define HPM_MCAN_NUM_TX_BUF_ELEMENTS (32U)
  #define HPM_MCAN_NUM_RX_BUF_ELEMENTS (16U)
- 
-+/* 临时诊断计数器（用调试器读 RAM 排查 TX 完成中断/事件回收是否正常，定位完可删） */
-+volatile uint32_t hpm_mcan_dbg_isr;
-+volatile uint32_t hpm_mcan_dbg_tc_isr;
-+volatile uint32_t hpm_mcan_dbg_tc_done;
-+volatile uint32_t hpm_mcan_dbg_send_ok;
-+volatile uint32_t hpm_mcan_dbg_send_fail;
-+volatile uint32_t hpm_mcan_dbg_rx_pop;
-+volatile uint32_t hpm_mcan_dbg_sem_timeout;
++#define HPM_MCAN_RX_DRAIN_LIMIT      (64U)
 +
 +/* TX FIFO 深度：本驱动用 SDK 默认 RAM 配置（mcan_get_default_ram_config(..., true)），
 + * FD 分支给的是 MCAN_TXBUF_SIZE_CANFD_DEFAULT/2 个 TX FIFO 元素（当前 = 4），
@@ -173,7 +166,7 @@ index a5327dfecad82df0f726b330cfc68f85886774ef..a390be150758da69fb71deb00a7f4f3a
 +
 +/* bus-off 自动恢复的最小重试间隔，见 hpm_mcan_try_bus_off_recover() */
 +#define HPM_MCAN_BUS_OFF_RECOVER_INTERVAL_MS (100)
-+
+ 
  #if defined(MCAN_SOC_MSG_BUF_IN_AHB_RAM) && (MCAN_SOC_MSG_BUF_IN_AHB_RAM == 1)
 -ATTR_PLACE_AT("AHB_SRAM") uint32_t board_app_mcan_msg_buf[MCAN_MSG_BUF_SIZE_IN_WORDS];
 -static mcan_msg_buf_attr_t s_can_info[] = {
@@ -193,7 +186,7 @@ index a5327dfecad82df0f726b330cfc68f85886774ef..a390be150758da69fb71deb00a7f4f3a
  #endif
  
  /* Default baudrate: 1Mbps @80MHz CAN clock */
-@@ -86,6 +108,12 @@ struct hpm_mcan_data {
+@@ -86,6 +99,12 @@ struct hpm_mcan_data {
      /* TX callback */
      can_tx_callback_t tx_fin_cb[HPM_MCAN_NUM_TX_BUF_ELEMENTS];
      void *tx_fin_cb_arg[HPM_MCAN_NUM_TX_BUF_ELEMENTS];
@@ -206,7 +199,7 @@ index a5327dfecad82df0f726b330cfc68f85886774ef..a390be150758da69fb71deb00a7f4f3a
  
      /* RX callback */
      can_rx_callback_t rx_cb_ext[HPM_CAN_EXT_FILTER_NUM_MAX];
-@@ -98,6 +126,9 @@ struct hpm_mcan_data {
+@@ -98,6 +117,9 @@ struct hpm_mcan_data {
      can_state_change_callback_t state_change_cb;
      void *state_change_cb_data;
      bool started;
@@ -216,7 +209,7 @@ index a5327dfecad82df0f726b330cfc68f85886774ef..a390be150758da69fb71deb00a7f4f3a
  };
  
  #define DT_DRV_COMPAT hpmicro_hpm_mcan
-@@ -106,8 +137,42 @@ LOG_MODULE_REGISTER(hpmicro_hpm_mcan, CONFIG_CAN_LOG_LEVEL);
+@@ -106,8 +128,42 @@ LOG_MODULE_REGISTER(hpmicro_hpm_mcan, CONFIG_CAN_LOG_LEVEL);
  static int hpm_mcan_get_state(const struct device *dev,
                               enum can_state *state,
                               struct can_bus_err_cnt *err_cnt);
@@ -260,19 +253,179 @@ index a5327dfecad82df0f726b330cfc68f85886774ef..a390be150758da69fb71deb00a7f4f3a
  
  /*
   * CAST CAN doesn't support reporting CAN filter index, this function mannually look up the filter index
-@@ -274,9 +339,11 @@ __attribute__((section(".isr")))static void hpm_mcan_isr(const struct device *de
+@@ -145,37 +201,40 @@ static void hpm_mcan_get_message_from_rxbuf(const struct device *dev, uint32_t b
+     const struct hpm_mcan_config *cfg = dev->config;
+     MCAN_Type *can = cfg->base;
+     struct hpm_mcan_data *data = dev->data;
++    mcan_rx_message_t rx_buf;
+     can_rx_callback_t cb;
+     struct can_frame frame;
+     void *cb_arg;
+-    memset(&s_can_rx_buf, 0, sizeof(s_can_rx_buf));
+-    mcan_read_rxbuf(can, buf_index, (mcan_rx_message_t *) &s_can_rx_buf);
++    memset(&rx_buf, 0, sizeof(rx_buf));
++    if (mcan_read_rxbuf(can, buf_index, &rx_buf) != status_success) {
++        return;
++    }
+ 
+-    uint32_t filter_index = hpm_mcan_get_first_filter_index(&s_can_rx_buf, data);
++    uint32_t filter_index = hpm_mcan_get_first_filter_index(&rx_buf, data);
+     memset(&frame, 0, sizeof(frame));
+-    if (s_can_rx_buf.use_ext_id) {
+-        frame.id = s_can_rx_buf.ext_id;
++    if (rx_buf.use_ext_id) {
++        frame.id = rx_buf.ext_id;
+     } else {
+-        frame.id = s_can_rx_buf.std_id;
++        frame.id = rx_buf.std_id;
+     }
+     frame.flags = 0;
+-    if (s_can_rx_buf.canfd_frame) {
++    if (rx_buf.canfd_frame) {
+         frame.flags |= CAN_FRAME_FDF;
+     }
+-    if (s_can_rx_buf.rtr) {
++    if (rx_buf.rtr) {
+         frame.flags |= CAN_FRAME_RTR;
+     }
+-    if (s_can_rx_buf.use_ext_id) {
++    if (rx_buf.use_ext_id) {
+         frame.flags |= CAN_FRAME_IDE;
+     }
+-    if (s_can_rx_buf.bitrate_switch) {
++    if (rx_buf.bitrate_switch) {
+         frame.flags |= CAN_FRAME_BRS;
+     }
+-    frame.dlc = s_can_rx_buf.dlc;
++    frame.dlc = rx_buf.dlc;
+     LOG_DBG("Frame on filter %d, ID: 0x%x", filter_index, frame.id);
+     size_t data_len = can_dlc_to_bytes(frame.dlc);
+     for (uint32_t i = 0; i < data_len; i++) {
+-        frame.data[i] = s_can_rx_buf.data_8[i];
++        frame.data[i] = rx_buf.data_8[i];
+     }
+ 
+     /* Handle RX filter callback */
+@@ -188,7 +247,7 @@ static void hpm_mcan_get_message_from_rxbuf(const struct device *dev, uint32_t b
+             return;
+         }
+ 
+-        if (s_can_rx_buf.use_ext_id) {
++        if (rx_buf.use_ext_id) {
+             cb = data->rx_cb_ext[filter_index];
+             cb_arg = data->rx_cb_arg_ext[filter_index];
+         } else {
+@@ -204,43 +263,47 @@ static void hpm_mcan_get_message_from_rxbuf(const struct device *dev, uint32_t b
+     }
+ }
+ 
+-/* Get MCAN message from RX BUF */
+-static void hpm_mcan_get_message_from_rxfifo(const struct device *dev, uint32_t fifo_index)
++/* Get one MCAN message from RX FIFO. Return false when the FIFO is empty. */
++static bool hpm_mcan_get_message_from_rxfifo(const struct device *dev,
++                                             uint32_t fifo_index)
+ {
+     const struct hpm_mcan_config *cfg = dev->config;
+     MCAN_Type *can = cfg->base;
+     struct hpm_mcan_data *data = dev->data;
++    mcan_rx_message_t rx_buf;
+     can_rx_callback_t cb;
+     struct can_frame frame;
+     void *cb_arg;
+-    memset(&s_can_rx_buf, 0, sizeof(s_can_rx_buf));
+-    mcan_read_rxfifo(can, fifo_index, (mcan_rx_message_t *) &s_can_rx_buf);
++    memset(&rx_buf, 0, sizeof(rx_buf));
++    if (mcan_read_rxfifo(can, fifo_index, &rx_buf) != status_success) {
++        return false;
++    }
+ 
+-    uint32_t filter_index = hpm_mcan_get_first_filter_index(&s_can_rx_buf, data);
++    uint32_t filter_index = hpm_mcan_get_first_filter_index(&rx_buf, data);
+     memset(&frame, 0, sizeof(frame));
+-    if (s_can_rx_buf.use_ext_id) {
+-        frame.id = s_can_rx_buf.ext_id;
++    if (rx_buf.use_ext_id) {
++        frame.id = rx_buf.ext_id;
+     } else {
+-        frame.id = s_can_rx_buf.std_id;
++        frame.id = rx_buf.std_id;
+     }
+     frame.flags = 0;
+-    if (s_can_rx_buf.canfd_frame) {
++    if (rx_buf.canfd_frame) {
+         frame.flags |= CAN_FRAME_FDF;
+     }
+-    if (s_can_rx_buf.rtr) {
++    if (rx_buf.rtr) {
+         frame.flags |= CAN_FRAME_RTR;
+     }
+-    if (s_can_rx_buf.use_ext_id) {
++    if (rx_buf.use_ext_id) {
+         frame.flags |= CAN_FRAME_IDE;
+     }
+-    if (s_can_rx_buf.bitrate_switch) {
++    if (rx_buf.bitrate_switch) {
+         frame.flags |= CAN_FRAME_BRS;
+     }
+-    frame.dlc = s_can_rx_buf.dlc;
++    frame.dlc = rx_buf.dlc;
+     LOG_DBG("Frame on filter %d, ID: 0x%x", filter_index, frame.id);
+     size_t data_len = can_dlc_to_bytes(frame.dlc);
+     for (uint32_t i = 0; i < data_len; i++) {
+-        frame.data[i] = s_can_rx_buf.data_8[i];
++        frame.data[i] = rx_buf.data_8[i];
+     }
+ 
+     /* Handle RX filter callback */
+@@ -250,10 +313,10 @@ static void hpm_mcan_get_message_from_rxfifo(const struct device *dev, uint32_t
+         bool rtr_filter = (data->filter_rtr & BIT(filter_index)) != 0;
+         bool rtr_in_frame = (frame.flags & CAN_FRAME_RTR);
+         if ((rtr_filter_mask != rtr_in_frame) || (rtr_filter != rtr_in_frame)) {
+-            return;
++            return true;
+         }
+ 
+-        if (s_can_rx_buf.use_ext_id) {
++        if (rx_buf.use_ext_id) {
+             cb = data->rx_cb_ext[filter_index];
+             cb_arg = data->rx_cb_arg_ext[filter_index];
+         } else {
+@@ -267,6 +330,16 @@ static void hpm_mcan_get_message_from_rxfifo(const struct device *dev, uint32_t
+             LOG_DBG("cb missing");
+         }
+     }
++    return true;
++}
++
++static void hpm_mcan_drain_rxfifo(const struct device *dev, uint32_t fifo_index)
++{
++    for (uint32_t i = 0; i < HPM_MCAN_RX_DRAIN_LIMIT; ++i) {
++        if (!hpm_mcan_get_message_from_rxfifo(dev, fifo_index)) {
++            break;
++        }
++    }
+ }
+ 
+ __attribute__((section(".isr")))static void hpm_mcan_isr(const struct device *dev)
+@@ -274,14 +347,9 @@ __attribute__((section(".isr")))static void hpm_mcan_isr(const struct device *de
      const struct hpm_mcan_config *cfg = dev->config;
      MCAN_Type *can = cfg->base;
      uint32_t flags = mcan_get_interrupt_flags(can);
-+    hpm_mcan_dbg_isr++;
-     /* New message is available in RXFIFO0 */
-     if ((flags & MCAN_INT_RXFIFO0_NEW_MSG) != 0) {
-         hpm_mcan_get_message_from_rxfifo(dev, 0);
-+        hpm_mcan_dbg_rx_pop++;
-     }
-     /* New message is available in RXFIFO1 */
-     if ((flags & MCAN_INT_RXFIFO1_NEW_MSG) != 0U) {
-@@ -294,10 +361,11 @@ __attribute__((section(".isr")))static void hpm_mcan_isr(const struct device *de
+-    /* New message is available in RXFIFO0 */
+-    if ((flags & MCAN_INT_RXFIFO0_NEW_MSG) != 0) {
+-        hpm_mcan_get_message_from_rxfifo(dev, 0);
+-    }
+-    /* New message is available in RXFIFO1 */
+-    if ((flags & MCAN_INT_RXFIFO1_NEW_MSG) != 0U) {
+-        hpm_mcan_get_message_from_rxfifo(dev, 1);
+-    }
++    /* Always consume all pending FIFO entries, not only one per ISR. */
++    hpm_mcan_drain_rxfifo(dev, 0);
++    hpm_mcan_drain_rxfifo(dev, 1);
+     /* New message is available in RXBUF */
+     if ((flags & MCAN_INT_MSG_STORE_TO_RXBUF) != 0U) {
+         /* NOTE: Below code is for demonstration purpose, the performance is not optimized
+@@ -294,10 +362,10 @@ __attribute__((section(".isr")))static void hpm_mcan_isr(const struct device *de
              }
          }
      }
@@ -282,12 +435,22 @@ index a5327dfecad82df0f726b330cfc68f85886774ef..a390be150758da69fb71deb00a7f4f3a
      if ((flags & MCAN_EVENT_TRANSMIT) != 0U) {
 -        has_sent_out = true;
 -        hpm_mcan_tc_event_handler(dev, 0);
-+        hpm_mcan_dbg_tc_isr++;
 +        hpm_mcan_tc_event_handler(dev);
      }
  
      /* Error happened */
-@@ -320,7 +388,12 @@ static int hpm_mcan_init(const struct device *dev)
+@@ -306,6 +374,10 @@ __attribute__((section(".isr")))static void hpm_mcan_isr(const struct device *de
+     }
+ 
+     mcan_clear_interrupt_flags(can, flags);
++
++    /* Frames can arrive during the drain; close that race before returning. */
++    hpm_mcan_drain_rxfifo(dev, 0);
++    hpm_mcan_drain_rxfifo(dev, 1);
+ }
+ 
+ static int hpm_mcan_init(const struct device *dev)
+@@ -320,7 +392,12 @@ static int hpm_mcan_init(const struct device *dev)
  
      k_mutex_init(&data->inst_mutex);
      k_mutex_init(&data->tx_mutex);
@@ -301,7 +464,7 @@ index a5327dfecad82df0f726b330cfc68f85886774ef..a390be150758da69fb71deb00a7f4f3a
  
      for (uint32_t i= 0; i < ARRAY_SIZE(data->tx_fin_sem); i++) {
          k_sem_init(&data->tx_fin_sem[i], 1, 1);
-@@ -328,7 +401,9 @@ static int hpm_mcan_init(const struct device *dev)
+@@ -328,7 +405,9 @@ static int hpm_mcan_init(const struct device *dev)
  
      data->filter_rtr = 0;
      data->filter_rtr_mask = 0;
@@ -312,7 +475,7 @@ index a5327dfecad82df0f726b330cfc68f85886774ef..a390be150758da69fb71deb00a7f4f3a
  
      /* Configure dt provided device signals when available */
      ret = pinctrl_apply_state(cfg->pincfg, PINCTRL_STATE_DEFAULT);
-@@ -338,7 +413,19 @@ static int hpm_mcan_init(const struct device *dev)
+@@ -338,7 +417,19 @@ static int hpm_mcan_init(const struct device *dev)
      }
  
  #if defined(MCAN_SOC_MSG_BUF_IN_AHB_RAM) && (MCAN_SOC_MSG_BUF_IN_AHB_RAM == 1)
@@ -333,7 +496,7 @@ index a5327dfecad82df0f726b330cfc68f85886774ef..a390be150758da69fb71deb00a7f4f3a
      if (status != status_success) {
          LOG_ERR("MCAN set msg buf in AHB RAM failed");
          return -EAGAIN;
-@@ -347,6 +434,29 @@ static int hpm_mcan_init(const struct device *dev)
+@@ -347,6 +438,29 @@ static int hpm_mcan_init(const struct device *dev)
  
      mcan_get_default_config(can, config);
  
@@ -363,7 +526,7 @@ index a5327dfecad82df0f726b330cfc68f85886774ef..a390be150758da69fb71deb00a7f4f3a
      clock_add_to_group(cfg->clock_name, 0);
  
      clock_set_source_divider(cfg->clock_name, cfg->clock_src, cfg->clock_div);
-@@ -366,6 +476,9 @@ static int hpm_mcan_init(const struct device *dev)
+@@ -366,6 +480,9 @@ static int hpm_mcan_init(const struct device *dev)
  
      uint32_t can_clk_freq = clock_get_frequency(cfg->clock_name);
      status = mcan_init(can, config, can_clk_freq);
@@ -373,7 +536,7 @@ index a5327dfecad82df0f726b330cfc68f85886774ef..a390be150758da69fb71deb00a7f4f3a
      if (status != status_success) {
          ret = -EAGAIN;
      } else {
-@@ -478,10 +591,9 @@ static void convert_can_frame_to_mcan_frame(const struct can_frame *frame,
+@@ -478,10 +595,9 @@ static void convert_can_frame_to_mcan_frame(const struct can_frame *frame,
  static int hpm_mcan_send(const struct device *dev,
                          const struct can_frame *frame,
                          k_timeout_t timeout,
@@ -386,7 +549,7 @@ index a5327dfecad82df0f726b330cfc68f85886774ef..a390be150758da69fb71deb00a7f4f3a
      const struct hpm_mcan_config *cfg = dev->config;
      struct hpm_mcan_data *data = dev->data;
      MCAN_Type *can = cfg->base;
-@@ -530,37 +642,61 @@ static int hpm_mcan_send(const struct device *dev,
+@@ -530,37 +646,58 @@ static int hpm_mcan_send(const struct device *dev,
  		return -ENETDOWN;
  	}
  
@@ -418,14 +581,13 @@ index a5327dfecad82df0f726b330cfc68f85886774ef..a390be150758da69fb71deb00a7f4f3a
 +     * 满了就按调用者给的超时等待重试。（实测本 IP 在 FIFO 模式下 TX Event FIFO 不产出事件、
 +     * TXBTO 又只读，用"信用信号量"一旦还不回来就永久卡死 —— 那正是"TX 缓冲区一直满"的来源。） */
 +    int64_t deadline_ms = INT64_MAX;
- 
--    data->tx_fin_cb[0] = callback;
--    data->tx_fin_cb_arg[0] = user_data;
++
 +    if (!K_TIMEOUT_EQ(timeout, K_FOREVER)) {
 +        deadline_ms = k_uptime_get() + k_ticks_to_ms_ceil64(timeout.ticks);
 +    }
  
--    status = mcan_transmit_via_txbuf_nonblocking(can, 0, &tx_buf);
+-    data->tx_fin_cb[0] = callback;
+-    data->tx_fin_cb_arg[0] = user_data;
 +    uint32_t fifo_index = 0;
 +    for (;;) {
 +        if (k_mutex_lock(&data->tx_mutex, K_NO_WAIT) == 0) {
@@ -438,18 +600,14 @@ index a5327dfecad82df0f726b330cfc68f85886774ef..a390be150758da69fb71deb00a7f4f3a
 +            status = mcan_transmit_via_txfifo_nonblocking(can, &tx_buf, &fifo_index);
 +            if (status == status_success) {
 +                data->tx_cb_tail = (tail + 1U) % HPM_MCAN_NUM_TX_BUF_ELEMENTS;
-+                hpm_mcan_dbg_send_ok++;
 +            } else {
 +                /* 没排进去：回滚回调记录（tail 没动） */
 +                data->tx_fin_cb[tail] = NULL;
 +                data->tx_fin_cb_arg[tail] = NULL;
-+                hpm_mcan_dbg_send_fail++;
 +            }
 +            k_mutex_unlock(&data->tx_mutex);
  
--    k_mutex_unlock(&data->tx_mutex);
--    if (status != 0) {
--        return -EIO;
+-    status = mcan_transmit_via_txbuf_nonblocking(can, 0, &tx_buf);
 +            if (status == status_success) {
 +                break;
 +            }
@@ -457,16 +615,18 @@ index a5327dfecad82df0f726b330cfc68f85886774ef..a390be150758da69fb71deb00a7f4f3a
 +                return -EIO;      /* 其它错误（参数/索引等）直接上报 */
 +            }
 +        }
-+
+ 
+-    k_mutex_unlock(&data->tx_mutex);
+-    if (status != 0) {
+-        return -EIO;
 +        if (k_uptime_get() >= deadline_ms) {
-+            hpm_mcan_dbg_sem_timeout++;      /* TX FIFO 一直满 */
 +            return -EAGAIN;
 +        }
 +        k_busy_wait(50);
      }
  
      if (callback == NULL) {
-@@ -784,37 +920,38 @@ static int hpm_mcan_get_state(const struct device *dev,
+@@ -784,37 +921,38 @@ static int hpm_mcan_get_state(const struct device *dev,
                               struct can_bus_err_cnt *err_cnt)
  {
      int ret = 0;
@@ -526,7 +686,7 @@ index a5327dfecad82df0f726b330cfc68f85886774ef..a390be150758da69fb71deb00a7f4f3a
          err_cnt->tx_err_cnt = error_count.transmit_error_count;
          err_cnt->rx_err_cnt = error_count.receive_error_count;
      }
-@@ -848,6 +985,11 @@ static void hpm_mcan_state_change_handler(const struct device *dev)
+@@ -848,6 +986,11 @@ static void hpm_mcan_state_change_handler(const struct device *dev)
  
      (void) hpm_mcan_get_state(dev, &state, &err_cnt);
  
@@ -538,7 +698,7 @@ index a5327dfecad82df0f726b330cfc68f85886774ef..a390be150758da69fb71deb00a7f4f3a
      if (cb != NULL) {
          cb(dev, state, err_cnt, cb_data);
      }
-@@ -863,16 +1005,38 @@ static void hpm_mcan_set_state_change_callback(const struct device *dev,
+@@ -863,16 +1006,36 @@ static void hpm_mcan_set_state_change_callback(const struct device *dev,
      data->state_change_cb_data = user_data;
  }
  
@@ -573,8 +733,6 @@ index a5327dfecad82df0f726b330cfc68f85886774ef..a390be150758da69fb71deb00a7f4f3a
 +        data->tx_fin_cb[head] = NULL;
 +        data->tx_fin_cb_arg[head] = NULL;
 +        data->tx_cb_head = (head + 1U) % HPM_MCAN_NUM_TX_BUF_ELEMENTS;
-+        hpm_mcan_dbg_tc_done++;
-+
 +        if (tx_cb == NULL) {
 +            /* 阻塞式 can_send()（callback == NULL）等在这个信号量上 */
 +            k_sem_give(&data->tx_fin_sem[0]);
@@ -585,7 +743,7 @@ index a5327dfecad82df0f726b330cfc68f85886774ef..a390be150758da69fb71deb00a7f4f3a
      }
  }
  
-@@ -1037,7 +1201,7 @@ static const struct can_driver_api hpm_mcan_driver_api = {
+@@ -1037,7 +1200,7 @@ static const struct can_driver_api hpm_mcan_driver_api = {
          static void hpm_mcan_irq_config_func##n(const struct device *dev); \
      \
      static const struct hpm_mcan_config hpm_mcan_cfg_##n = { \
@@ -595,7 +753,7 @@ index a5327dfecad82df0f726b330cfc68f85886774ef..a390be150758da69fb71deb00a7f4f3a
          .clock_name = (clock_name_t)DT_INST_PROP(n, clk_name), \
          .clock_src = (clk_src_t)DT_INST_PROP(n, clk_source), \
 diff --git a/drivers/flash/flash_hpmicro.c b/drivers/flash/flash_hpmicro.c
-index a4ac1e7d7b9c00366b81b9e0ab625da5f6600735..1936d1ec7dc70daa9c6c2e71179e656b472925df 100644
+index a4ac1e7..1936d1e 100644
 --- a/drivers/flash/flash_hpmicro.c
 +++ b/drivers/flash/flash_hpmicro.c
 @@ -17,7 +17,6 @@
@@ -662,7 +820,7 @@ index a4ac1e7d7b9c00366b81b9e0ab625da5f6600735..1936d1ec7dc70daa9c6c2e71179e656b
 \ No newline at end of file
 +		      &flash_hpmicro_driver_api);
 diff --git a/drivers/pinctrl/pinctrl_hpmicro.c b/drivers/pinctrl/pinctrl_hpmicro.c
-index 6aa21a3f26a9e551774b91e2d1bcb31cde8eab9d..bc7a7d36de2ec9176d032d700a95b42cef2d25f5 100644
+index 6aa21a3..bc7a7d3 100644
 --- a/drivers/pinctrl/pinctrl_hpmicro.c
 +++ b/drivers/pinctrl/pinctrl_hpmicro.c
 @@ -47,7 +47,7 @@ static int hpmicro_pin_configure(IOC_Type *ioc_base, const uint32_t pin_mux, con
@@ -675,7 +833,7 @@ index 6aa21a3f26a9e551774b91e2d1bcb31cde8eab9d..bc7a7d36de2ec9176d032d700a95b42c
  	IOC_PAD_PAD_CTL_SPD_SET(HPMICRO_PAD_CTL_SPD(pin_cfg)) |
  	IOC_PAD_PAD_CTL_PRS_SET(HPMICRO_PAD_CTL_PRS(pin_cfg)) |
 diff --git a/drivers/serial/Kconfig.hpmicro b/drivers/serial/Kconfig.hpmicro
-index df2a55743d464612ef91d6ea65bdafc00a272e30..31a3291ed6147630f1228bdc304943db5b7f3c47 100644
+index df2a557..31a3291 100644
 --- a/drivers/serial/Kconfig.hpmicro
 +++ b/drivers/serial/Kconfig.hpmicro
 @@ -10,9 +10,10 @@ config UART_HPMICRO
@@ -696,7 +854,7 @@ index df2a55743d464612ef91d6ea65bdafc00a272e30..31a3291ed6147630f1228bdc304943db
 \ No newline at end of file
 +	  This option enables the UART driver for HPM SoC family.
 diff --git a/drivers/serial/uart_hpmicro.c b/drivers/serial/uart_hpmicro.c
-index f1f5081baa1dcfaad77b1b7147e471385cf2fda4..a71757207e918c1a79fd4201021748d9fbaa4bbd 100644
+index f1f5081..a717572 100644
 --- a/drivers/serial/uart_hpmicro.c
 +++ b/drivers/serial/uart_hpmicro.c
 @@ -8,12 +8,25 @@
@@ -1623,7 +1781,7 @@ index f1f5081baa1dcfaad77b1b7147e471385cf2fda4..a71757207e918c1a79fd4201021748d9
  DT_INST_FOREACH_STATUS_OKAY(HPM_UART_INIT)
 diff --git a/drivers/watchdog/CMakeLists.txt b/drivers/watchdog/CMakeLists.txt
 new file mode 100644
-index 0000000000000000000000000000000000000000..f3833b1c0c46e4be0fa74268db1521be7720845d
+index 0000000..f3833b1
 --- /dev/null
 +++ b/drivers/watchdog/CMakeLists.txt
 @@ -0,0 +1,5 @@
@@ -1634,7 +1792,7 @@ index 0000000000000000000000000000000000000000..f3833b1c0c46e4be0fa74268db1521be
 +zephyr_library_sources_ifdef(CONFIG_WDT_HPMICRO wdt_hpmicro.c)
 diff --git a/drivers/watchdog/Kconfig.hpmicro b/drivers/watchdog/Kconfig.hpmicro
 new file mode 100644
-index 0000000000000000000000000000000000000000..e8d8c58b9762b32ca40eacc0702cd04deca053d7
+index 0000000..e8d8c58
 --- /dev/null
 +++ b/drivers/watchdog/Kconfig.hpmicro
 @@ -0,0 +1,19 @@
@@ -1659,7 +1817,7 @@ index 0000000000000000000000000000000000000000..e8d8c58b9762b32ca40eacc0702cd04d
 +	range 50 1000
 diff --git a/drivers/watchdog/wdt_hpmicro.c b/drivers/watchdog/wdt_hpmicro.c
 new file mode 100644
-index 0000000000000000000000000000000000000000..a98f61c8e304c5c84d335c15340bc77e537fa0cd
+index 0000000..a98f61c
 --- /dev/null
 +++ b/drivers/watchdog/wdt_hpmicro.c
 @@ -0,0 +1,187 @@
@@ -1851,7 +2009,7 @@ index 0000000000000000000000000000000000000000..a98f61c8e304c5c84d335c15340bc77e
 +
 +DT_INST_FOREACH_STATUS_OKAY(WDT_HPMICRO_INIT)
 diff --git a/dts/bindings/can/hpmicro,hpm-mcan.yaml b/dts/bindings/can/hpmicro,hpm-mcan.yaml
-index 58fe797d09df50c9eeb8f7a0f3e9e29c09462399..76ac0a1cf0c2b940803ed2d373cb083654f8c49e 100644
+index 58fe797..76ac0a1 100644
 --- a/dts/bindings/can/hpmicro,hpm-mcan.yaml
 +++ b/dts/bindings/can/hpmicro,hpm-mcan.yaml
 @@ -5,7 +5,11 @@ description: HPMicro HPM MCAN
@@ -1869,7 +2027,7 @@ index 58fe797d09df50c9eeb8f7a0f3e9e29c09462399..76ac0a1cf0c2b940803ed2d373cb0836
    reg:
 diff --git a/dts/bindings/watchdog/hpmicro,hpm-ewdg.yaml b/dts/bindings/watchdog/hpmicro,hpm-ewdg.yaml
 new file mode 100644
-index 0000000000000000000000000000000000000000..fcfb8338ee0077502a90fb943e2dda7539386b20
+index 0000000..fcfb833
 --- /dev/null
 +++ b/dts/bindings/watchdog/hpmicro,hpm-ewdg.yaml
 @@ -0,0 +1,14 @@
@@ -1888,7 +2046,7 @@ index 0000000000000000000000000000000000000000..fcfb8338ee0077502a90fb943e2dda75
 +    type: int
 +    required: true
 diff --git a/dts/riscv/hpmicro/hpm53xx.dtsi b/dts/riscv/hpmicro/hpm53xx.dtsi
-index 13a9a87603f92de2b4a9ed052f02a265422c9d18..4d1be0c6951851db1d568703bf26990f25c613ce 100644
+index 13a9a87..4d1be0c 100644
 --- a/dts/riscv/hpmicro/hpm53xx.dtsi
 +++ b/dts/riscv/hpmicro/hpm53xx.dtsi
 @@ -5,7 +5,7 @@
@@ -2080,7 +2238,7 @@ index 13a9a87603f92de2b4a9ed052f02a265422c9d18..4d1be0c6951851db1d568703bf26990f
 \ No newline at end of file
 +};
 diff --git a/modules/hpm_sdk/CMakeLists.txt b/modules/hpm_sdk/CMakeLists.txt
-index cf9d62d00ecc5639a05dea471e6de549ec7fd90e..854b63ea9fe91fc8c8d70a8e1d35bef116e1d0d5 100644
+index cf9d62d..854b63e 100644
 --- a/modules/hpm_sdk/CMakeLists.txt
 +++ b/modules/hpm_sdk/CMakeLists.txt
 @@ -10,6 +10,10 @@ endif()
@@ -2095,7 +2253,7 @@ index cf9d62d00ecc5639a05dea471e6de549ec7fd90e..854b63ea9fe91fc8c8d70a8e1d35bef1
  string(TOUPPER ${SOC_SERIES} HPM_SOC_SERIES_TOUPPER)
  set(HPM_SOC_SERIES ${HPM_SOC_SERIES_TOUPPER})
 diff --git a/modules/hpm_sdk/Kconfig b/modules/hpm_sdk/Kconfig
-index 629151170d7ae53467f8a36c5c07b18aec5ce4c8..7f93a83936f874c5eefe2c7926b2120eb4779328 100644
+index 6291511..7f93a83 100644
 --- a/modules/hpm_sdk/Kconfig
 +++ b/modules/hpm_sdk/Kconfig
 @@ -28,6 +28,8 @@ config HAS_HPMSDK_PDMA
@@ -2108,7 +2266,7 @@ index 629151170d7ae53467f8a36c5c07b18aec5ce4c8..7f93a83936f874c5eefe2c7926b2120e
  	bool
  config HAS_HPMSDK_DMAV2
 diff --git a/soc/hpmicro/CMakeLists.txt b/soc/hpmicro/CMakeLists.txt
-index 4704b0816180f7309efe62dd4cf2f6a3bbee4000..e653aef0e0995051a449d357e917c13886e161f2 100644
+index 4704b08..e653aef 100644
 --- a/soc/hpmicro/CMakeLists.txt
 +++ b/soc/hpmicro/CMakeLists.txt
 @@ -2,7 +2,15 @@
@@ -2136,7 +2294,7 @@ index 4704b0816180f7309efe62dd4cf2f6a3bbee4000..e653aef0e0995051a449d357e917c138
 \ No newline at end of file
 +zephyr_linker_sources(ITCM_SECTION SORT_KEY 0 common/ISR.ld)
 diff --git a/soc/hpmicro/HPM6200/Kconfig.defconfig.series b/soc/hpmicro/HPM6200/Kconfig.defconfig.series
-index 714fb4419dfa4722464dcf7747153fff4a5633ee..241ac4e5a5186a010a37c9309221646e8284361f 100644
+index 714fb44..241ac4e 100644
 --- a/soc/hpmicro/HPM6200/Kconfig.defconfig.series
 +++ b/soc/hpmicro/HPM6200/Kconfig.defconfig.series
 @@ -25,8 +25,6 @@ config DCACHE
@@ -2149,7 +2307,7 @@ index 714fb4419dfa4722464dcf7747153fff4a5633ee..241ac4e5a5186a010a37c9309221646e
  config 2ND_LVL_ISR_TBL_OFFSET
  	default 12
 diff --git a/soc/hpmicro/HPM6700/Kconfig.defconfig.series b/soc/hpmicro/HPM6700/Kconfig.defconfig.series
-index a8156ed727cbb31fdada38a922db1d576508f6b2..8a2c07c9eb0e9203ecd8e789226751975140919c 100644
+index a8156ed..8a2c07c 100644
 --- a/soc/hpmicro/HPM6700/Kconfig.defconfig.series
 +++ b/soc/hpmicro/HPM6700/Kconfig.defconfig.series
 @@ -25,8 +25,6 @@ config DCACHE
@@ -2162,7 +2320,7 @@ index a8156ed727cbb31fdada38a922db1d576508f6b2..8a2c07c9eb0e9203ecd8e78922675197
  config 2ND_LVL_ISR_TBL_OFFSET
  	default 12
 diff --git a/soc/hpmicro/HPM6800/Kconfig.defconfig.series b/soc/hpmicro/HPM6800/Kconfig.defconfig.series
-index a4b8fe3cf980f0ca75b9f5e7c4e0b18f2bc054d3..5b677fa0506b538b9c0dd19f7043b741fa54f99b 100644
+index a4b8fe3..5b677fa 100644
 --- a/soc/hpmicro/HPM6800/Kconfig.defconfig.series
 +++ b/soc/hpmicro/HPM6800/Kconfig.defconfig.series
 @@ -25,8 +25,6 @@ config DCACHE
@@ -2175,7 +2333,7 @@ index a4b8fe3cf980f0ca75b9f5e7c4e0b18f2bc054d3..5b677fa0506b538b9c0dd19f7043b741
  config 2ND_LVL_ISR_TBL_OFFSET
  	default 12
 diff --git a/soc/hpmicro/HPM6E00/Kconfig.defconfig.series b/soc/hpmicro/HPM6E00/Kconfig.defconfig.series
-index d2724b674f693a39491303571fae06dc0d0d93dc..ba7af0ac8ea0e4ee9138808d9a08a8def9735db9 100644
+index d2724b6..ba7af0a 100644
 --- a/soc/hpmicro/HPM6E00/Kconfig.defconfig.series
 +++ b/soc/hpmicro/HPM6E00/Kconfig.defconfig.series
 @@ -25,8 +25,6 @@ config DCACHE
@@ -2188,7 +2346,7 @@ index d2724b674f693a39491303571fae06dc0d0d93dc..ba7af0ac8ea0e4ee9138808d9a08a8de
  config 2ND_LVL_ISR_TBL_OFFSET
  	default 12
 diff --git a/soc/hpmicro/Kconfig b/soc/hpmicro/Kconfig
-index 37a4dd5b8a6947456b3d6f6e487c768485490817..5ba7037bc92b97c2ad67384f0c87155765eb55e5 100644
+index 37a4dd5..5ba7037 100644
 --- a/soc/hpmicro/Kconfig
 +++ b/soc/hpmicro/Kconfig
 @@ -9,6 +9,10 @@ config SOC_FAMILY_HPM
@@ -2210,7 +2368,7 @@ index 37a4dd5b8a6947456b3d6f6e487c768485490817..5ba7037bc92b97c2ad67384f0c871557
 \ No newline at end of file
 +endif # SOC_FAMILY_HPM
 diff --git a/soc/hpmicro/Kconfig.defconfig b/soc/hpmicro/Kconfig.defconfig
-index 5fd59fa3dd9166a7fd470bcf24d83223e1f0d951..1542191fe7771dc3a9735ae358d38202db720cca 100644
+index 5fd59fa..1542191 100644
 --- a/soc/hpmicro/Kconfig.defconfig
 +++ b/soc/hpmicro/Kconfig.defconfig
 @@ -8,6 +8,10 @@
@@ -2232,7 +2390,7 @@ index 5fd59fa3dd9166a7fd470bcf24d83223e1f0d951..1542191fe7771dc3a9735ae358d38202
 \ No newline at end of file
 +endif
 diff --git a/soc/hpmicro/Kconfig.soc b/soc/hpmicro/Kconfig.soc
-index 0ac112d752521282f5e5ad086e36fe56887ff83b..4ef5fe94716e6f9bab6ea2520e2b0ccbf8a08f12 100644
+index 0ac112d..4ef5fe9 100644
 --- a/soc/hpmicro/Kconfig.soc
 +++ b/soc/hpmicro/Kconfig.soc
 @@ -7,4 +7,8 @@ config SOC_FAMILY_HPM
@@ -2247,7 +2405,7 @@ index 0ac112d752521282f5e5ad086e36fe56887ff83b..4ef5fe94716e6f9bab6ea2520e2b0ccb
 +# SELF-MAINTAINED — 用户自研 HPM5E00 SoC 支持（sdk_glue_user 小树）
 +source "${ZEPHYR_SDK_GLUE_MODULE_DIR}/../sdk_glue_user/soc/hpmicro/HPM5E00/Kconfig.soc"
 diff --git a/soc/hpmicro/soc.yml b/soc/hpmicro/soc.yml
-index 43729e95f73c2cb5c59f89e899924173fe382d30..8908ea4f344e0e49bdf6acd887b313350b3d8280 100644
+index 43729e9..8908ea4 100644
 --- a/soc/hpmicro/soc.yml
 +++ b/soc/hpmicro/soc.yml
 @@ -7,6 +7,9 @@ family:
